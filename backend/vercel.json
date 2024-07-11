@@ -6,15 +6,12 @@
       "use": "@vercel/node"
     }
   ],
- "routes": [
+  "routes": [
     {
-      "src": "/api/(.*)",
-      "dest": "/api/$1"
+      "src": "/(.*)",
+      "dest": "index.ts"
     }
   ],
-  "env": {
-    "MONGO_CONNECTION_STRING": "mongodb+srv://natureis21429:SQ5MYtvWLnQztz3U@cluster0.8wo9tkj.mongodb.net/"
-  },
   "installCommand": "npm install",
   "buildCommand": "echo \"No build step needed\""
 }

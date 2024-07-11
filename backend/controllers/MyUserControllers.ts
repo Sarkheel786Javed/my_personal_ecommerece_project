@@ -1,76 +1,57 @@
-import {Request, Response} from 'express'
+import { Request, Response } from 'express';
 import userModel from '../model/user';
 const { hashPassword, comparePassword } = require("../helper/authHelper");
 
-const multer = require("multer");
-const storage = multer.memoryStorage();
-
-const registerController = async (req:any, res:any) => {
+const registerController = async (req: Request, res: Response) => {
     try {
-      const { user_name, email, password, addressLine1 ,city,  country, answer, phoneNumbber} = req.body;
-      //validations
-      if (!user_name) {
-        return res.send({ error: "User name is required" });
-      }
+        console.log('Request received:', req.body);
+        const { user_name, email, password, addressLine1, city, country, answer, phoneNumbber } = req.body;
 
-      if (!email) {
-        return res.send({ error: "Email is required" });
-      }
+        // Validations
+        if (!user_name) return res.status(400).send({ error: "User name is required" });
+        if (!email) return res.status(400).send({ error: "Email is required" });
+        if (!password) return res.status(400).send({ error: "Password is required" });
+        if (!addressLine1) return res.status(400).send({ error: "Address is required" });
+        if (!phoneNumbber) return res.status(400).send({ error: "Phone number is required" });
+        if (!city) return res.status(400).send({ error: "City is required" });
+        if (!country) return res.status(400).send({ error: "Country is required" });
 
-      if (!password) {
-        return res.send({ error: "Password  is required" });
-      }
-      if (!addressLine1) {
-        return res.send({ error: "Address  is required" });
-      }
-      if (!phoneNumbber) {
-        return res.send({ error: "Phone  is required" });
-      }
-      if (!city) {
-        return res.send({ error: "City  is required" });
-      }
-      if (!country) {
-        return res.send({ error: "Country  is required" });
-      }
+        // Check user
+        const existingUser = await userModel.findOne({ email });
+        if (existingUser) {
+            return res.status(200).send({
+                success: false,
+                message: "Already registered, please login",
+            });
+        }
 
-      //check user
-      const exisitingUser = await userModel.findOne({ email });
-      //exisiting user
-      if (exisitingUser) {
-        return res.status(200).send({
-          success: false,
-          message: "Already Register please login",
+        // Register user
+        const hashedPassword = await hashPassword(password);
+        const user = await new userModel({
+            user_name,
+            email,
+            password: hashedPassword,
+            addressLine1,
+            phoneNumbber,
+            city,
+            country,
+            answer,
+        }).save();
+
+        res.status(200).send({
+            success: true,
+            message: "User registered successfully",
+            user,
         });
-      }
-      //register user
-      const hashedPassword = await hashPassword(password);
-      //save
-      const user = await new userModel({
-        user_name,
-        email,
-        password: hashedPassword,
-        addressLine1,
-        phoneNumbber,
-        city,
-        country,
-        answer,
-      }).save();
-  
-      res.status(200).send({
-        success: true,
-        message: "User Register Successfully",
-        user,
-      });
     } catch (error) {
-      console.log(error);
-      res.status(500).send({
-        success: false,
-        message: "Error in Registeration",
-        error,
-      });
+        console.error('Error in registerController:', error);
+        res.status(500).send({
+            success: false,
+            message: "Error in registration",
+            error,
+        });
     }
-  };
-  
+};
   //POST LOGIN
 //   const loginController = async (req:any, res:any) => {
 //     try {

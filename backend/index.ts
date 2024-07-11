@@ -16,7 +16,7 @@ app.use(cors())
 ///////////////////////////
 app.use("/api/my/user", myUserRoute)
 /////////////////////////////
-app.get("/test", async (req:Request, res: Response)=>{
+app.get("/test", async (req:any, res: any)=>{
     res.json({ message:'Hello!'})
 });
 

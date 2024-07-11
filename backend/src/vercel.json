@@ -1,12 +1,10 @@
 {
-    "version":2,
-    "builds": [
-      { "src": "*.ts", "use": "@vercel/node" }
-    ],
-    "routes": [
-        {
-          "src": "/(.*)",
-          "dest": "/"
-        }
-    ]
-  }
+  "builds": [
+    {
+      "src": "index.ts",
+      "use": "@vercel/node"
+    }
+  ],
+  "installCommand": "npm install",
+  "buildCommand": "npm run build"
+}

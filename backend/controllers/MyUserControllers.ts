@@ -85,15 +85,15 @@ const registerController = async (req: Request, res: Response) => {
       res.status(200).send({
         success: true,
         message: "login successfully",
-        user: {
-          _id: user._id,
-          user_name: user.user_name,
-            email: user.email,
-            addressLine1: user.addressLine1,
-            phoneNumbber: user.phoneNumbber,
-            city: user.city,
-            country: user.country,
-        },
+        // user: {
+        //   _id: user._id,
+        //   user_name: user.user_name,
+        //     email: user.email,
+        //     addressLine1: user.addressLine1,
+        //     phoneNumbber: user.phoneNumbber,
+        //     city: user.city,
+        //     country: user.country,
+        // },
         token,
       });
     } catch (error) {

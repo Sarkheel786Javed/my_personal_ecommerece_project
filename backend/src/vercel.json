@@ -6,5 +6,5 @@
     }
   ],
   "installCommand": "npm install",
-  "buildCommand": "npm run build"
+  "buildCommand": "echo \"No build step needed\""
 }

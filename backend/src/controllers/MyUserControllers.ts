@@ -5,7 +5,7 @@ const { hashPassword, comparePassword } = require("../helper/authHelper");
 const multer = require("multer");
 const storage = multer.memoryStorage();
 
-const registerController = async (req:any, res:any) => {
+const registerController = async (req:Request, res:Response) => {
     try {
       const { user_name, email, password, addressLine1 ,city,  country, answer, phoneNumbber} = req.body;
       //validations

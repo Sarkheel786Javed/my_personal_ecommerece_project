@@ -1,5 +1,5 @@
 const JWT = require("jsonwebtoken");
-const userModel = require("../model/userModel");
+const userModel = require("../model/user");
 
 //Protected Routes token base
 const requireSignIn = async (req:any, res:any, next:any) => {
@@ -20,7 +20,7 @@ const isAdmin = async (req:any, res:any, next:any) => {
   try {
     const user = await userModel.findById(req.user._id);
 
-    if (user.role !== 0 || user.role !== 1) {
+    if (user.Organization !== "admin" || user.Organization !== "shopHolder" || user.Organization !== "user" ) {
       return res.status(401).send({
         success: false,
         message: "UnAuthorized Access",

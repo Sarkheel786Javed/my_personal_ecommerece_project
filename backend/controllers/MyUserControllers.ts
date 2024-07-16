@@ -5,10 +5,10 @@ const JWT = require("jsonwebtoken");
 const registerController = async (req: Request, res: Response) => {
     try {
         console.log('Request received:', req.body);
-        const { user_name, email, password, addressLine1, city, country, answer, phoneNumbber } = req.body;
+        const { userName, email, password, addressLine1, city, country, answer, phoneNumbber } = req.body;
 
         // Validations
-        if (!user_name) return res.status(400).send({ error: "User name is required" });
+        if (!userName) return res.status(400).send({ error: "User name is required" });
         if (!email) return res.status(400).send({ error: "Email is required" });
         if (!password) return res.status(400).send({ error: "Password is required" });
         if (!addressLine1) return res.status(400).send({ error: "Address is required" });
@@ -28,7 +28,7 @@ const registerController = async (req: Request, res: Response) => {
         // Register user
         const hashedPassword = await hashPassword(password);
         const user = await new userModel({
-            user_name,
+            userName,
             email,
             password: hashedPassword,
             addressLine1,
@@ -87,7 +87,7 @@ const registerController = async (req: Request, res: Response) => {
         message: "login successfully",
         // user: {
         //   _id: user._id,
-        //   user_name: user.user_name,
+        //   userName: user.userName,
         //     email: user.email,
         //     addressLine1: user.addressLine1,
         //     phoneNumbber: user.phoneNumbber,

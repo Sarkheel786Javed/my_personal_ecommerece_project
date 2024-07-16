@@ -111,52 +111,52 @@ const registerController = async (req: Request, res: Response) => {
     }
   };
   
-//   //forgotPasswordController
+   //forgotPasswordController
   
-//   const forgotPasswordController = async (req, res) => {
-//     try {
-//       const { answer, email, password } = req.body;
-//       if (!email) {
-//         res.status(400).send({ message: "email is required" });
-//       }
-//       if (!answer) {
-//         res.status(400).send({ message: "Father Name  is required" });
-//       }
-//       if (!password) {
-//         res.status(400).send({ message: "New Password is required" });
-//       }
+  const forgotPasswordController = async (req:Request, res:Response) => {
+    try {
+      const { answer, email, password } = req.body;
+      if (!email) {
+        res.status(400).send({ message: "email is required" });
+      }
+      if (!answer) {
+        res.status(400).send({ message: "Father Name  is required" });
+      }
+      if (!password) {
+        res.status(400).send({ message: "New Password is required" });
+      }
   
-//       //check
-//       const user = await userModel.findOne({ email, answer });
-//       //validation
-//       const F_name = answer;
-//       if (F_name !== answer) {
-//         return res.status(404).send({
-//           success: false,
-//           message: "Father Name is not same ",
-//         });
-//       }
-//       if (!user) {
-//         return res.status(404).send({
-//           success: false,
-//           message: "Wrong Email Or FatherName",
-//         });
-//       }
-//       const hashed = await hashPassword(password);
-//       await userModel.findByIdAndUpdate(user._id, { password: hashed });
-//       res.status(200).send({
-//         success: true,
-//         message: "Password Reset Successfully",
-//       });
-//     } catch (error) {
-//       console.log(error);
-//       res.status(500).send({
-//         success: false,
-//         message: "Something went wrong",
-//         error,
-//       });
-//     }
-//   };
+      //check
+      const user = await userModel.findOne({ email, answer });
+      //validation
+      const F_name = answer;
+      if (F_name !== answer) {
+        return res.status(404).send({
+          success: false,
+          message: "Father Name is not same ",
+        });
+      }
+      if (!user) {
+        return res.status(404).send({
+          success: false,
+          message: "Wrong Email Or FatherName",
+        });
+      }
+      const hashed = await hashPassword(password);
+      await userModel.findByIdAndUpdate(user._id, { password: hashed });
+      res.status(200).send({
+        success: true,
+        message: "Password Reset Successfully",
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        success: false,
+        message: "Something went wrong",
+        error,
+      });
+    }
+  };
   
 //   //test controller
 //   const testController = (req, res) => {
@@ -193,38 +193,32 @@ const registerController = async (req: Request, res: Response) => {
   
   
 //   // get single user
-//   const getSingleuser = async (req, res) => {
-//     try {
-//       const userId = req.params.userId;
-//       const user = await userModel.findById(userId);
+  const getSingleuser = async (req:Request, res:Response) => {
+    try {
+      const userId = req.params.userId;
+      const user = await userModel.findById({ userId });
   
-//       if (!user) {
-//         return res.status(404).json({
-//           success: false,
-//           message: "User not found",
-//         });
-//       }
-  
-//       // Decrypt the password (replace this with your decryption logic)
-//       const decryptedPassword = user.password;
-  
-//       res.status(200).json({
-//         success: true,
-//         message: "Get user data successfully",
-//         user: {
-//           ...user._doc,
-//           password: decryptedPassword,
-//         },
-//       });
-//     } catch (error) {
-//       console.log(error);
-//       res.status(500).json({
-//         success: false,
-//         message: "Failed to get user data",
-//         error: error.message,
-//       });
-//     }
-//   };
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Get user data successfully",
+        user: {user:user  },
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to get user data",
+        error: (error as Error).message, // Type assertion for error
+      });
+    }
+  };
   
 //   const updateRegisterController = async (req, res) => {
 //     try {
@@ -320,6 +314,8 @@ const registerController = async (req: Request, res: Response) => {
 module.exports = {
   registerController,
   loginController,
+  forgotPasswordController,
+  getSingleuser,
 };
   // module.exports = {
   //   registerController

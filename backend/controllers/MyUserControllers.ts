@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import userModel from '../model/user';
 const { hashPassword, comparePassword } = require("../helper/authHelper");
 const JWT = require("jsonwebtoken");
+
 const registerController = async (req: Request, res: Response) => {
     try {
         console.log('Request received:', req.body);
@@ -79,7 +80,17 @@ const registerController = async (req: Request, res: Response) => {
         });
       }
       //token
-      const token = await JWT.sign({ _id: user._id }, process.env.JWT_SECRET, {
+      const token = await JWT.sign(
+        { _id: user._id ,
+          userName: user.userName,
+          email: user.email,
+          // password: hashedPassword,
+          addressLine1:user.addressLine1,
+          phoneNumbber: user.phoneNumbber,
+          city: user.city,
+          country:user.country,
+          answer:user.answer,
+        }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });
       res.status(200).send({

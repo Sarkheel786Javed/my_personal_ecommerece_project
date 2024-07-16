@@ -85,11 +85,13 @@ const registerController = async (req: Request, res: Response) => {
           userName: user.userName,
           email: user.email,
           // password: hashedPassword,
-          addressLine1:user.addressLine1,
+          addressLine1: user.addressLine1,
           phoneNumbber: user.phoneNumbber,
           city: user.city,
-          country:user.country,
-          answer:user.answer,
+          country: user.country,
+          answer: user.answer,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
         }, process.env.JWT_SECRET, {
         expiresIn: "7d",
       });

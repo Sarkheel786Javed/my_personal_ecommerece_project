@@ -196,7 +196,7 @@ const registerController = async (req: Request, res: Response) => {
   const getSingleuser = async (req:Request, res:Response) => {
     try {
       const userId = req.params.userId;
-      const user = await userModel.findById({ userId });
+      const user = await userModel.findById(userId);
   
       if (!user) {
         return res.status(404).json({
@@ -210,6 +210,7 @@ const registerController = async (req: Request, res: Response) => {
         message: "Get user data successfully",
         user: {user:user  },
       });
+      console.log("User=========>",)
     } catch (error) {
       console.log(error);
       res.status(500).json({

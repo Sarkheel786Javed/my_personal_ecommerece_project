@@ -20,7 +20,7 @@ const isAdmin = async (req:any, res:any, next:any) => {
   try {
     const user = await userModel.findById(req.user._id);
 
-    if (user.Organization !== "admin" || user.Organization !== "shopHolder" || user.Organization !== "user" ) {
+    if (user.Organization !== "Admin" || user.Organization !== "Department" || user.Organization !== "User" ) {
       return res.status(401).send({
         success: false,
         message: "UnAuthorized Access",

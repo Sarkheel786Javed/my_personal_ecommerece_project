@@ -1,42 +1,15 @@
 import mongoose from "mongoose";
 const userSchema = new mongoose.Schema(
   {
-    userName: {
-      type: String,
-      require: true
-    },
-    answer: {
-      type: String,
-      require: true
-    },
-    phoneNumbber: {
-      type: String,
-      require: true
-    },
-    addressLine1: {
-      type: String,
-      require: true
-    },
-    city: {
-      type: String,
-      require: true
-    },
-    country: {
-      type: String,
-      require: true
-    },
-    email: {
-      type: String,
-      require: true
-    },
-    password: {
-      type: String,
-      require: true
-    },
-    Organization: {
-      type: String,
-      default:"User"
-    },
+    userName: { type: String, required: true },
+    email: { type: String, required: true, unique: true },
+    password: { type: String, required: true },
+    addressLine1: { type: String, required: true },
+    phoneNumbber: { type: String, required: true },
+    city: { type: String, required: true },
+    country: { type: String, required: true },
+    answer: { type: String, required: true },
+    refreshToken: { type: String, default: '' }, // Add this line
   },
   { timestamps: true }
 );

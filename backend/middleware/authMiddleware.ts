@@ -33,7 +33,7 @@ const isAdmin = async (req:any, res:any, next:any) => {
     res.status(401).send({
       success: false,
       error,
-      message: "Error in admin middelware",
+      message: error
     });
   }
 };

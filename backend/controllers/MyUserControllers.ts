@@ -54,24 +54,27 @@ const registerController = async (req: Request, res: Response) => {
     }
 };
   //POST LOGIN
-  const loginController = async (req:any, res:any) => {
+  const loginController = async (req: any, res: any) => {
     try {
       const { email, password } = req.body;
-      //validation
+  
+      // Validation
       if (!email || !password) {
         return res.status(404).send({
           success: false,
           message: "Invalid email or password",
         });
       }
-      //check user
+  
+      // Check user
       const user = await userModel.findOne({ email });
       if (!user) {
         return res.status(404).send({
           success: false,
-          message: "Email is not registerd",
+          message: "Email is not registered",
         });
       }
+  
       const match = await comparePassword(password, user.password);
       if (!match) {
         return res.status(200).send({
@@ -79,12 +82,13 @@ const registerController = async (req: Request, res: Response) => {
           message: "Invalid Password",
         });
       }
-      //token
-      const token = await JWT.sign(
-        { _id: user._id ,
+  
+      // Generate tokens
+      const accessToken = JWT.sign(
+        {
+          _id: user._id,
           userName: user.userName,
           email: user.email,
-          // password: hashedPassword,
           addressLine1: user.addressLine1,
           phoneNumbber: user.phoneNumbber,
           city: user.city,
@@ -92,14 +96,26 @@ const registerController = async (req: Request, res: Response) => {
           answer: user.answer,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
-        }, process.env.JWT_SECRET, {
-        expiresIn: "7d",
-      });
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+  
+      const refreshToken = JWT.sign(
+        { _id: user._id },
+        process.env.REFRESH_TOKEN_SECRET,
+        { expiresIn: "30d" } // Example expiration time
+      );
+  
+      // Save refresh token in database
+      user.refreshToken = refreshToken;
+      await user.save();
+  
       res.status(200).send({
         success: true,
-        message: "login successfully",
-        // user: {user :user },
-        token,
+        message: "Login successfully",
+        token: accessToken,
+        refreshToken: refreshToken,
       });
     } catch (error) {
       console.log(error);
@@ -110,7 +126,89 @@ const registerController = async (req: Request, res: Response) => {
       });
     }
   };
+  const refreshTokenController = async (req: any, res: any) => {
+    try {
+      const { token } = req.body;
   
+      if (!token) {
+        return res.status(400).send({
+          success: false,
+          message: "Refresh token is required",
+        });
+      }
+  
+      // Verify refresh token
+      const decoded = JWT.verify(token, process.env.REFRESH_TOKEN_SECRET);
+  
+      // Find user by refresh token
+      const user = await userModel.findOne({ refreshToken: token });
+      if (!user) {
+        return res.status(404).send({
+          success: false,
+          message: "User not found",
+        });
+      }
+  
+      // Generate a new access token
+      const accessToken = JWT.sign(
+        {
+          _id: user._id,
+          userName: user.userName,
+          email: user.email,
+          addressLine1: user.addressLine1,
+          phoneNumbber: user.phoneNumbber,
+          city: user.city,
+          country: user.country,
+          answer: user.answer,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        },
+        process.env.JWT_SECRET,
+        { expiresIn: "7d" }
+      );
+  
+      res.status(200).send({
+        success: true,
+        message: "Token refreshed successfully",
+        token: accessToken,
+      });
+    } catch (error) {
+      console.log(error);
+      res.status(500).send({
+        success: false,
+        message: "Error refreshing token",
+        error,
+      });
+    }
+  };
+  
+  const getSingleuser = async (req:Request, res:Response) => {
+    try {
+      const userId = req.body.userId;
+      const user = await userModel.findById(userId);
+  
+      if (!user) {
+        return res.status(404).json({
+          success: false,
+          message: "User not found",
+        });
+      }
+
+      res.status(200).json({
+        success: true,
+        message: "Get user data successfully",
+        user: {user:user  },
+      });
+      console.log("User=========>",)
+    } catch (error) {
+      console.log(error);
+      res.status(500).json({
+        success: false,
+        message: "Failed to get user data",
+        error: (error as Error).message, // Type assertion for error
+      });
+    }
+  };
    //forgotPasswordController
   
   const forgotPasswordController = async (req:Request, res:Response) => {
@@ -193,33 +291,7 @@ const registerController = async (req: Request, res: Response) => {
   
   
 //   // get single user
-  const getSingleuser = async (req:Request, res:Response) => {
-    try {
-      const userId = req.params.userId;
-      const user = await userModel.findById(userId);
-  
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
 
-      res.status(200).json({
-        success: true,
-        message: "Get user data successfully",
-        user: {user:user  },
-      });
-      console.log("User=========>",)
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({
-        success: false,
-        message: "Failed to get user data",
-        error: (error as Error).message, // Type assertion for error
-      });
-    }
-  };
   
 //   const updateRegisterController = async (req, res) => {
 //     try {
@@ -317,6 +389,7 @@ module.exports = {
   loginController,
   forgotPasswordController,
   getSingleuser,
+  refreshTokenController,
 };
   // module.exports = {
   //   registerController

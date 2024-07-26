@@ -37,10 +37,6 @@ const userSchema = new mongoose.Schema(
       type: String,
       default:"User"
     },
-    refreshToken: {
-       type: String, 
-       default: '' 
-      }, // Add this line
   },
   { timestamps: true }
 );

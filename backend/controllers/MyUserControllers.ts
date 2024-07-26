@@ -1,4 +1,4 @@
-import { Request, Response } from 'express';
+import { Request, Response, NextFunction } from 'express';
 import userModel from '../model/user';
 const { hashPassword, comparePassword } = require("../helper/authHelper");
 const JWT = require("jsonwebtoken");
@@ -54,19 +54,17 @@ const registerController = async (req: Request, res: Response) => {
     }
 };
   //POST LOGIN
-  const loginController = async (req: any, res: any) => {
+  const loginController = async (req: Request, res: Response) => {
     try {
       const { email, password } = req.body;
-  
-      // Validation
+      // validation
       if (!email || !password) {
         return res.status(404).send({
           success: false,
           message: "Invalid email or password",
         });
       }
-  
-      // Check user
+      // check user
       const user = await userModel.findOne({ email });
       if (!user) {
         return res.status(404).send({
@@ -74,7 +72,6 @@ const registerController = async (req: Request, res: Response) => {
           message: "Email is not registered",
         });
       }
-  
       const match = await comparePassword(password, user.password);
       if (!match) {
         return res.status(200).send({
@@ -82,9 +79,8 @@ const registerController = async (req: Request, res: Response) => {
           message: "Invalid Password",
         });
       }
-  
-      // Generate tokens
-      const accessToken = JWT.sign(
+      // token with 2-minute expiration
+      const token = JWT.sign(
         {
           _id: user._id,
           userName: user.userName,
@@ -98,24 +94,14 @@ const registerController = async (req: Request, res: Response) => {
           updatedAt: user.updatedAt,
         },
         process.env.JWT_SECRET,
-        { expiresIn: "7d" }
+        {
+          expiresIn: "2m",
+        }
       );
-  
-      const refreshToken = JWT.sign(
-        { _id: user._id },
-        process.env.REFRESH_TOKEN_SECRET,
-        { expiresIn: "30d" } // Example expiration time
-      );
-  
-      // Save refresh token in database
-      user.refreshToken = refreshToken;
-      await user.save();
-  
       res.status(200).send({
         success: true,
         message: "Login successfully",
-        token: accessToken,
-        refreshToken: refreshToken,
+        token,
       });
     } catch (error) {
       console.log(error);
@@ -126,57 +112,65 @@ const registerController = async (req: Request, res: Response) => {
       });
     }
   };
-  const refreshTokenController = async (req: any, res: any) => {
+  
+  const regenerateToken = async (req: Request, res: Response) => {
     try {
       const { token } = req.body;
-  
       if (!token) {
         return res.status(400).send({
           success: false,
-          message: "Refresh token is required",
+          message: "Token is required",
         });
       }
-  
-      // Verify refresh token
-      const decoded = JWT.verify(token, process.env.REFRESH_TOKEN_SECRET);
-  
-      // Find user by refresh token
-      const user = await userModel.findOne({ refreshToken: token });
-      if (!user) {
-        return res.status(404).send({
+      // verify the token
+      let decoded;
+      try {
+        decoded = JWT.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+      } catch (error) {
+        return res.status(401).send({
           success: false,
-          message: "User not found",
+          message: "Invalid token",
         });
       }
   
-      // Generate a new access token
-      const accessToken = JWT.sign(
-        {
-          _id: user._id,
-          userName: user.userName,
-          email: user.email,
-          addressLine1: user.addressLine1,
-          phoneNumbber: user.phoneNumbber,
-          city: user.city,
-          country: user.country,
-          answer: user.answer,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
-        },
-        process.env.JWT_SECRET,
-        { expiresIn: "7d" }
-      );
-  
-      res.status(200).send({
-        success: true,
-        message: "Token refreshed successfully",
-        token: accessToken,
-      });
+      // check if token is expired
+      const now = Math.floor(Date.now() / 1000);
+      if (decoded.exp && decoded.exp < now) {
+        // token is expired, issue a new token
+        const newToken = JWT.sign(
+          {
+            _id: decoded._id,
+            userName: decoded.userName,
+            email: decoded.email,
+            addressLine1: decoded.addressLine1,
+            phoneNumbber: decoded.phoneNumbber,
+            city: decoded.city,
+            country: decoded.country,
+            answer: decoded.answer,
+            createdAt: decoded.createdAt,
+            updatedAt: decoded.updatedAt,
+          },
+          process.env.JWT_SECRET,
+          {
+            expiresIn: "2m",
+          }
+        );
+        return res.status(200).send({
+          success: true,
+          message: "Token regenerated successfully",
+          token: newToken,
+        });
+      } else {
+        return res.status(400).send({
+          success: false,
+          message: "Token is not expired yet",
+        });
+      }
     } catch (error) {
       console.log(error);
       res.status(500).send({
         success: false,
-        message: "Error refreshing token",
+        message: "Error in regenerating token",
         error,
       });
     }
@@ -389,7 +383,7 @@ module.exports = {
   loginController,
   forgotPasswordController,
   getSingleuser,
-  refreshTokenController,
+  regenerateToken
 };
   // module.exports = {
   //   registerController

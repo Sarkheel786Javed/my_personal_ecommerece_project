@@ -4,7 +4,7 @@ const {
     loginController,
     forgotPasswordController,
     getSingleuser,
-    refreshTokenController,
+    regenerateToken
 } = require('../controllers/MyUserControllers');
 
 const router = express.Router();
@@ -13,7 +13,7 @@ router.post("/signup", registerController);
 router.post("/login", loginController);
 router.post("/forget", forgotPasswordController);
 router.get(`/getUser/:userId`, getSingleuser);
-router.get(`/refresh-token`, refreshTokenController);
+router.post('/regenerate-token',   regenerateToken);
 
 
 export default router;

@@ -12,7 +12,7 @@ const router = express.Router();
 router.post("/signup", registerController);
 router.post("/login", loginController);
 router.post("/forget", forgotPasswordController);
-router.post('/regenerate-token',   regenerateToken);
+router.post('/regenerate-token/:token',   regenerateToken);
 router.get(`/getUser/:userId`, getSingleuser);
 
 

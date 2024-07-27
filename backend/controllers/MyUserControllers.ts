@@ -79,7 +79,7 @@ const registerController = async (req: Request, res: Response) => {
           message: "Invalid Password",
         });
       }
-      // token with 2-minute expiration
+      // token with 5-minute expiration
       const token = JWT.sign(
         {
           _id: user._id,
@@ -95,7 +95,7 @@ const registerController = async (req: Request, res: Response) => {
         },
         process.env.JWT_SECRET,
         {
-          expiresIn: "2m",
+          expiresIn: "5m",
         }
       );
       res.status(200).send({
@@ -112,6 +112,7 @@ const registerController = async (req: Request, res: Response) => {
       });
     }
   };
+  
   
   const regenerateToken = async (req: Request, res: Response) => {
     try {

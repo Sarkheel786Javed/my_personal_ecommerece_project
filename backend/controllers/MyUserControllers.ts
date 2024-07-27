@@ -4,254 +4,286 @@ const { hashPassword, comparePassword } = require("../helper/authHelper");
 const JWT = require("jsonwebtoken");
 
 const registerController = async (req: Request, res: Response) => {
-    try {
-        console.log('Request received:', req.body);
-        const { userName, email, password, addressLine1, city, country, answer, phoneNumbber } = req.body;
+  try {
+    console.log('Request received:', req.body);
+    const { userName, email, password, addressLine1, city, country, answer, phoneNumbber } = req.body;
 
-        // Validations
-        if (!userName) return res.status(400).send({ error: "User name is required" });
-        if (!email) return res.status(400).send({ error: "Email is required" });
-        if (!password) return res.status(400).send({ error: "Password is required" });
-        if (!addressLine1) return res.status(400).send({ error: "Address is required" });
-        if (!phoneNumbber) return res.status(400).send({ error: "Phone number is required" });
-        if (!city) return res.status(400).send({ error: "City is required" });
-        if (!country) return res.status(400).send({ error: "Country is required" });
+    // Validations
+    if (!userName) return res.status(400).send({ error: "User name is required" });
+    if (!email) return res.status(400).send({ error: "Email is required" });
+    if (!password) return res.status(400).send({ error: "Password is required" });
+    if (!addressLine1) return res.status(400).send({ error: "Address is required" });
+    if (!phoneNumbber) return res.status(400).send({ error: "Phone number is required" });
+    if (!city) return res.status(400).send({ error: "City is required" });
+    if (!country) return res.status(400).send({ error: "Country is required" });
 
-        // Check user
-        const existingUser = await userModel.findOne({ email });
-        if (existingUser) {
-            return res.status(200).send({
-                success: false,
-                message: "Already registered, please login",
-            });
-        }
-
-        // Register user
-        const hashedPassword = await hashPassword(password);
-        const user = await new userModel({
-            userName,
-            email,
-            password: hashedPassword,
-            addressLine1,
-            phoneNumbber,
-            city,
-            country,
-            answer,
-        }).save();
-
-        res.status(200).send({
-            success: true,
-            message: "User registered successfully",
-            user,
-        });
-    } catch (error) {
-        console.error('Error in registerController:', error);
-        res.status(500).send({
-            success: false,
-            message: "Error in registration",
-            error,
-        });
+    // Check user
+    const existingUser = await userModel.findOne({ email });
+    if (existingUser) {
+      return res.status(200).send({
+        success: false,
+        message: "Already registered, please login",
+      });
     }
+
+    // Register user
+    const hashedPassword = await hashPassword(password);
+    const user = await new userModel({
+      userName,
+      email,
+      password: hashedPassword,
+      addressLine1,
+      phoneNumbber,
+      city,
+      country,
+      answer,
+    }).save();
+
+    res.status(200).send({
+      success: true,
+      message: "User registered successfully",
+      user,
+    });
+  } catch (error) {
+    console.error('Error in registerController:', error);
+    res.status(500).send({
+      success: false,
+      message: "Error in registration",
+      error,
+    });
+  }
 };
-  //POST LOGIN
-  const loginController = async (req: Request, res: Response) => {
+//POST LOGIN
+const loginController = async (req: Request, res: Response) => {
+  try {
+    const { email, password } = req.body;
+
+    // Validation
+    if (!email || !password) {
+      return res.status(404).send({
+        success: false,
+        message: "Invalid email or password",
+      });
+    }
+
+    // Check user
+    const user = await userModel.findOne({ email });
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "Email is not registered",
+      });
+    }
+
+    // Compare password
+    const match = await comparePassword(password, user.password);
+    if (!match) {
+      return res.status(200).send({
+        success: false,
+        message: "Invalid Password",
+      });
+    }
+
+    // Update login time
+    user.updatedAt = new Date();
+    await user.save();
+
+    // Generate token with 5-minute expiration
+    const token = JWT.sign(
+      {
+        _id: user._id,
+        userName: user.userName,
+        email: user.email,
+        addressLine1: user.addressLine1,
+        phoneNumbber: user.phoneNumbber,
+        city: user.city,
+        country: user.country,
+        answer: user.answer,
+        Organization: user.Organization,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "5m",
+      }
+    );
+
+    // Send response
+    res.status(200).send({
+      success: true,
+      message: "Login successfully",
+      token,
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in login",
+      error,
+    });
+  }
+};
+
+export default loginController;
+
+const regenerateToken = async (req: Request, res: Response) => {
+  try {
+    const { token } = req.body;
+    if (!token) {
+      return res.status(400).send({
+        success: false,
+        message: "Token is required",
+      });
+    }
+
+    // Verify the token
+    let decoded;
     try {
-      const { email, password } = req.body;
-      // validation
-      if (!email || !password) {
-        return res.status(404).send({
-          success: false,
-          message: "Invalid email or password",
-        });
-      }
-      // check user
-      const user = await userModel.findOne({ email });
-      if (!user) {
-        return res.status(404).send({
-          success: false,
-          message: "Email is not registered",
-        });
-      }
-      const match = await comparePassword(password, user.password);
-      if (!match) {
-        return res.status(200).send({
-          success: false,
-          message: "Invalid Password",
-        });
-      }
-      // token with 5-minute expiration
-      const token = JWT.sign(
+      decoded = JWT.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
+    } catch (error) {
+      return res.status(401).send({
+        success: false,
+        message: "Invalid token",
+      });
+    }
+
+    // Check if token is expired
+    const now = Math.floor(Date.now() / 1000);
+    if (decoded.exp && decoded.exp < now) {
+      return res.status(400).send({
+        success: false,
+        message: "Token is expired",
+      });
+    }
+
+    // Calculate the difference between updatedAt and the current date and time
+    const updatedAt = new Date(decoded.updatedAt).getTime();
+    const currentTime = Date.now();
+    const durationInMilliseconds = currentTime - updatedAt;
+
+    // Set your desired duration threshold (e.g., 5 minutes)
+    const durationThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+
+    // Check if the duration is greater than the threshold
+    if (durationInMilliseconds > durationThreshold) {
+      // Issue a new token
+      const newToken = JWT.sign(
         {
-          _id: user._id,
-          userName: user.userName,
-          email: user.email,
-          addressLine1: user.addressLine1,
-          phoneNumbber: user.phoneNumbber,
-          city: user.city,
-          country: user.country,
-          answer: user.answer,
-          Organization: user.Organization,
-          createdAt: user.createdAt,
-          updatedAt: user.updatedAt,
+          _id: decoded._id,
+          userName: decoded.userName,
+          email: decoded.email,
+          addressLine1: decoded.addressLine1,
+          phoneNumbber: decoded.phoneNumbber,
+          city: decoded.city,
+          country: decoded.country,
+          answer: decoded.answer,
+          Organization: decoded.Organization,
+          createdAt: decoded.createdAt,
+          updatedAt: new Date().toISOString(),
         },
         process.env.JWT_SECRET,
         {
           expiresIn: "5m",
         }
       );
-      res.status(200).send({
-        success: true,
-        message: "Login successfully",
-        token,
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).send({
-        success: false,
-        message: "Error in login",
-        error,
-      });
-    }
-  };
-  
-  
-  const regenerateToken = async (req: Request, res: Response) => {
-    try {
-      const { token } = req.body;
-      if (!token) {
-        return res.status(400).send({
-          success: false,
-          message: "Token is required",
-        });
-      }
-      // verify the token
-      let decoded;
-      try {
-        decoded = JWT.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
-      } catch (error) {
-        return res.status(401).send({
-          success: false,
-          message: "Invalid token",
-        });
-      }
-  
-      // check if token is expired
-      const now = Math.floor(Date.now() / 1000);
-      if (decoded.exp && decoded.exp < now) {
-        // token is expired, issue a new token
-        const newToken = JWT.sign(
-          {
-            _id: decoded._id,
-            userName: decoded.userName,
-            email: decoded.email,
-            addressLine1: decoded.addressLine1,
-            phoneNumbber: decoded.phoneNumbber,
-            city: decoded.city,
-            country: decoded.country,
-            answer: decoded.answer,
-            createdAt: decoded.createdAt,
-            updatedAt: decoded.updatedAt,
-          },
-          process.env.JWT_SECRET,
-          {
-            expiresIn: "2m",
-          }
-        );
-        return res.status(200).send({
-          success: true,
-          message: "Token regenerated successfully",
-          token: newToken,
-        });
-      } else {
-        return res.status(400).send({
-          success: false,
-          message: "Token is not expired yet",
-        });
-      }
-    } catch (error) {
-      console.log(error);
-      res.status(500).send({
-        success: false,
-        message: "Error in regenerating token",
-        error,
-      });
-    }
-  };
-  
-  const getSingleuser = async (req:Request, res:Response) => {
-    try {
-      const userId = req.params.userId; 
-      const user = await userModel.findById(userId);
-  
-      if (!user) {
-        return res.status(404).json({
-          success: false,
-          message: "User not found",
-        });
-      }
 
-      res.status(200).json({
+      return res.status(200).send({
         success: true,
-        message: "Get user data successfully",
-        user: {user:user  },
+        message: "Token regenerated successfully",
+        token: newToken,
       });
-      console.log("User=========>",)
-    } catch (error) {
-      console.log(error);
-      res.status(500).json({
+    } else {
+      return res.status(400).send({
         success: false,
-        message: "Failed to get user data",
-        error: (error as Error).message, 
+        message: "Token refresh not required yet",
       });
     }
-  };
-   //forgotPasswordController
-  
-  const forgotPasswordController = async (req:Request, res:Response) => {
-    try {
-      const { answer, email, password } = req.body;
-      if (!email) {
-        res.status(400).send({ message: "email is required" });
-      }
-      if (!answer) {
-        res.status(400).send({ message: "Father Name  is required" });
-      }
-      if (!password) {
-        res.status(400).send({ message: "New Password is required" });
-      }
-  
-      //check
-      const user = await userModel.findOne({ email, answer });
-      //validation
-      const F_name = answer;
-      if (F_name !== answer) {
-        return res.status(404).send({
-          success: false,
-          message: "Father Name is not same ",
-        });
-      }
-      if (!user) {
-        return res.status(404).send({
-          success: false,
-          message: "Wrong Email Or FatherName",
-        });
-      }
-      const hashed = await hashPassword(password);
-      await userModel.findByIdAndUpdate(user._id, { password: hashed });
-      res.status(200).send({
-        success: true,
-        message: "Password Reset Successfully",
-      });
-    } catch (error) {
-      console.log(error);
-      res.status(500).send({
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Error in regenerating token",
+      error,
+    });
+  }
+};
+
+
+const getSingleuser = async (req: Request, res: Response) => {
+  try {
+    const userId = req.params.userId;
+    const user = await userModel.findById(userId);
+
+    if (!user) {
+      return res.status(404).json({
         success: false,
-        message: "Something went wrong",
-        error,
+        message: "User not found",
       });
     }
-  };
-  
+
+    res.status(200).json({
+      success: true,
+      message: "Get user data successfully",
+      user: { user: user },
+    });
+    console.log("User=========>",)
+  } catch (error) {
+    console.log(error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to get user data",
+      error: (error as Error).message,
+    });
+  }
+};
+//forgotPasswordController
+
+const forgotPasswordController = async (req: Request, res: Response) => {
+  try {
+    const { answer, email, password } = req.body;
+    if (!email) {
+      res.status(400).send({ message: "email is required" });
+    }
+    if (!answer) {
+      res.status(400).send({ message: "Father Name  is required" });
+    }
+    if (!password) {
+      res.status(400).send({ message: "New Password is required" });
+    }
+
+    //check
+    const user = await userModel.findOne({ email, answer });
+    //validation
+    const F_name = answer;
+    if (F_name !== answer) {
+      return res.status(404).send({
+        success: false,
+        message: "Father Name is not same ",
+      });
+    }
+    if (!user) {
+      return res.status(404).send({
+        success: false,
+        message: "Wrong Email Or FatherName",
+      });
+    }
+    const hashed = await hashPassword(password);
+    await userModel.findByIdAndUpdate(user._id, { password: hashed });
+    res.status(200).send({
+      success: true,
+      message: "Password Reset Successfully",
+    });
+  } catch (error) {
+    console.log(error);
+    res.status(500).send({
+      success: false,
+      message: "Something went wrong",
+      error,
+    });
+  }
+};
+
 //   //test controller
 //   const testController = (req, res) => {
 //     try {
@@ -284,25 +316,25 @@ const registerController = async (req: Request, res: Response) => {
 //       });
 //     }
 //   };
-  
-  
+
+
 //   // get single user
 
-  
+
 //   const updateRegisterController = async (req, res) => {
 //     try {
 //       const { fullName, phoneNo, answer, email, password } = req.body;
 //       const userId = req.params.id;
-  
+
 //       const user = await userModel.findById(userId);
-  
+
 //       if (!user) {
 //         return res.status(404).json({
 //           success: false,
 //           message: "User not found",
 //         });
 //       }
-  
+
 //       // Password validation
 //       if (password && password.length < 6) {
 //         return res.status(400).json({
@@ -310,20 +342,20 @@ const registerController = async (req: Request, res: Response) => {
 //           message: "Password is required and must be at least 6 characters long",
 //         });
 //       }
-  
+
 //       // Validate and hash the password if provided
 //       const hashedPassword = password ? await hashPassword(password) : undefined;
-  
+
 //       // Handle profile picture update
 //       let newProfileImage = null;
-  
+
 //       if (req.file) {
 //         newProfileImage = {
 //           data: req.file.buffer,
 //           contentType: req.file.mimetype,
 //         };
 //       }
-  
+
 //       // Update user data
 //       const updateUser = await userModel.findByIdAndUpdate(
 //         userId,
@@ -337,14 +369,14 @@ const registerController = async (req: Request, res: Response) => {
 //         },
 //         { new: true }
 //       );
-  
+
 //       if (!updateUser) {
 //         return res.status(500).json({
 //           success: false,
 //           message: "Error in updating user",
 //         });
 //       }
-  
+
 //       res.status(200).send({
 //         success: true,
 //         message: "User updated successfully",
@@ -359,7 +391,7 @@ const registerController = async (req: Request, res: Response) => {
 //       });
 //     }
 //   };
-  
+
 //   // get photo
 //   const userPhotoController = async (req, res) => {
 //     try {
@@ -387,15 +419,15 @@ module.exports = {
   getSingleuser,
   regenerateToken
 };
-  // module.exports = {
-  //   registerController
-  //   // getAllUser,
-  //   // forgotPasswordController,
-  //   // testController,
-  //   // getSingleuser,
-  //   // updateRegisterController,
-  //   // userPhotoController
-  //   // userProfileController,
-  //   // getUserProfileController,
-  //   // deleteUserProfileController,
-  // };
+// module.exports = {
+//   registerController
+//   // getAllUser,
+//   // forgotPasswordController,
+//   // testController,
+//   // getSingleuser,
+//   // updateRegisterController,
+//   // userPhotoController
+//   // userProfileController,
+//   // getUserProfileController,
+//   // deleteUserProfileController,
+// };

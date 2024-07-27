@@ -129,7 +129,7 @@ export default loginController;
 
 const regenerateToken = async (req: Request, res: Response) => {
   try {
-    const { token } = req.params.token;
+    const token = req.params.token;
     if (!token) {
       return res.status(400).send({
         success: false,

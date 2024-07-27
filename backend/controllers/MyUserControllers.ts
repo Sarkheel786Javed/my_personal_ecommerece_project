@@ -105,7 +105,7 @@ const loginController = async (req: Request, res: Response) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "5m",
+        expiresIn: "1m",
       }
     );
 
@@ -129,7 +129,7 @@ export default loginController;
 
 const regenerateToken = async (req: Request, res: Response) => {
   try {
-    const { token } = req.body;
+    const { token } = req.params.token;
     if (!token) {
       return res.status(400).send({
         success: false,
@@ -163,7 +163,7 @@ const regenerateToken = async (req: Request, res: Response) => {
     const durationInMilliseconds = currentTime - updatedAt;
 
     // Set your desired duration threshold (e.g., 5 minutes)
-    const durationThreshold = 5 * 60 * 1000; // 5 minutes in milliseconds
+    const durationThreshold = 1 * 60 * 1000; // 5 minutes in milliseconds
 
     // Check if the duration is greater than the threshold
     if (durationInMilliseconds > durationThreshold) {
@@ -184,7 +184,7 @@ const regenerateToken = async (req: Request, res: Response) => {
         },
         process.env.JWT_SECRET,
         {
-          expiresIn: "5m",
+          expiresIn: "1m",
         }
       );
 

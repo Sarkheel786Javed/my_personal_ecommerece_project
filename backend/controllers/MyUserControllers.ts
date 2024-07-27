@@ -90,6 +90,7 @@ const registerController = async (req: Request, res: Response) => {
           city: user.city,
           country: user.country,
           answer: user.answer,
+          Organization: user.Organization,
           createdAt: user.createdAt,
           updatedAt: user.updatedAt,
         },

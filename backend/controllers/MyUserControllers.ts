@@ -179,7 +179,7 @@ const registerController = async (req: Request, res: Response) => {
   
   const getSingleuser = async (req:Request, res:Response) => {
     try {
-      const userId = req.body.userId;
+      const userId = req.params.userId; 
       const user = await userModel.findById(userId);
   
       if (!user) {
@@ -200,7 +200,7 @@ const registerController = async (req: Request, res: Response) => {
       res.status(500).json({
         success: false,
         message: "Failed to get user data",
-        error: (error as Error).message, // Type assertion for error
+        error: (error as Error).message, 
       });
     }
   };

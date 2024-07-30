@@ -13,7 +13,7 @@ router.post("/signup", registerController);
 router.post("/login", loginController);
 router.post("/forget", forgotPasswordController);
 router.post('/regenerate-token/:token',   regenerateToken);
-router.get(`/getUser/:userId`, getSingleuser);
+router.get(`/getUser/:userId/:token`, getSingleuser);
 
 
 

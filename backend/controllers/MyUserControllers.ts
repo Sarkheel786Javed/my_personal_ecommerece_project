@@ -210,10 +210,11 @@ const regenerateToken = async (req: Request, res: Response) => {
 };
 
 
+
 const getSingleuser = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
-    const token = req.headers.authorization?.split(' ')[1]; // Assuming token is in the format 'Bearer token'
+    const token = req.params.token; // Access token from request parameters
 
     if (!token) {
       return res.status(401).json({
@@ -260,6 +261,8 @@ const getSingleuser = async (req: Request, res: Response) => {
     });
   }
 };
+
+
 //forgotPasswordController
 
 const forgotPasswordController = async (req: Request, res: Response) => {

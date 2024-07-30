@@ -213,6 +213,29 @@ const regenerateToken = async (req: Request, res: Response) => {
 const getSingleuser = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;
+    const token = req.headers.authorization?.split(' ')[1]; // Assuming token is in the format 'Bearer token'
+
+    if (!token) {
+      return res.status(401).json({
+        success: false,
+        message: "No token provided",
+      });
+    }
+
+    const decodedToken = JWT.verify(token, process.env.JWT_SECRET) as { userId: string, iat: number, exp: number };
+
+    // Check if the token's issued time is within the valid duration
+    const currentTime = Date.now();
+    const issuedAt = decodedToken.iat * 1000; // Convert to milliseconds
+    const durationInMinutes = (currentTime - issuedAt) / 60000; // Convert milliseconds to minutes
+
+    if (durationInMinutes > 1) {
+      return res.status(401).json({
+        success: false,
+        message: "Token expired or invalid",
+      });
+    }
+
     const user = await userModel.findById(userId);
 
     if (!user) {
@@ -227,9 +250,9 @@ const getSingleuser = async (req: Request, res: Response) => {
       message: "Get user data successfully",
       user: { user: user },
     });
-    console.log("User=========>",)
+
   } catch (error) {
-    console.log(error);
+    console.error(error);
     res.status(500).json({
       success: false,
       message: "Failed to get user data",

@@ -1,14 +1,14 @@
-import { Router } from 'express';
-const {
-  registerController,
-  loginController,
-  regenerateToken,
-  getSingleuser,
-  forgotPasswordController,
-} = require ('../controllers/authController')
+import express from 'express';
+const { 
+    registerController,
+    loginController,
+    forgotPasswordController,
+    getSingleuser,
+    regenerateToken
+} = require('../controllers/MyUserControllers');
 
-const router = Router();
-
+const router = express.Router();
+// /api/my/user
 // Route for user registration
 router.post('/register', registerController);
 
@@ -23,5 +23,7 @@ router.get('/user/:userId', getSingleuser);
 
 // Route for forgot password
 router.post('/forgot-password', forgotPasswordController);
+
+
 
 export default router;

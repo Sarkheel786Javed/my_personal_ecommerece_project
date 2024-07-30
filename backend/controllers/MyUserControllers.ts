@@ -237,7 +237,6 @@ const getSingleuser = async (req: Request, res: Response) => {
   }
 };
 
-
 //forgotPasswordController
 
 const forgotPasswordController = async (req: Request, res: Response) => {
@@ -285,9 +284,6 @@ const forgotPasswordController = async (req: Request, res: Response) => {
   }
 };
 const JWT_SECRET = process.env.JWT_SECRET || 'hbkhvghvhvhgchfdxgfxfhmxxbnxvvbdfhxxcvb'; // Replace with your actual secret
-
-// Regenerate Token
-
 
 // Get Single User
 

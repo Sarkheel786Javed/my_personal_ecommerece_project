@@ -137,7 +137,7 @@ const regenerateToken = async (req: Request, res: Response) => {
       });
     }
 
-    // Verify the token
+    // Verify the token without checking expiration
     let decoded;
     try {
       decoded = JWT.verify(token, process.env.JWT_SECRET, { ignoreExpiration: true });
@@ -148,22 +148,13 @@ const regenerateToken = async (req: Request, res: Response) => {
       });
     }
 
-    // Check if token is expired
-    const now = Math.floor(Date.now() / 1000);
-    if (decoded.exp && decoded.exp < now) {
-      return res.status(400).send({
-        success: false,
-        message: "Token is expired",
-      });
-    }
-
     // Calculate the difference between updatedAt and the current date and time
     const updatedAt = new Date(decoded.updatedAt).getTime();
     const currentTime = Date.now();
     const durationInMilliseconds = currentTime - updatedAt;
 
-    // Set your desired duration threshold (e.g., 5 minutes)
-    const durationThreshold = 1 * 60 * 1000; // 5 minutes in milliseconds
+    // Set your desired duration threshold (e.g., 1 minute)
+    const durationThreshold = 1 * 60 * 1000; // 1 minute in milliseconds
 
     // Check if the duration is greater than the threshold
     if (durationInMilliseconds > durationThreshold) {
@@ -208,6 +199,7 @@ const regenerateToken = async (req: Request, res: Response) => {
     });
   }
 };
+
 
 
 

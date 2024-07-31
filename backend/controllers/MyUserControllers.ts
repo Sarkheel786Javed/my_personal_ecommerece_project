@@ -198,6 +198,7 @@ const regenerateToken = async (req: Request, res: Response) => {
   }
 };
 
+
 const getSingleuser = async (req: Request, res: Response) => {
   try {
     const userId = req.params.userId;

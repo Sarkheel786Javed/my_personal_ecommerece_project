@@ -1,34 +1,33 @@
-import express, { Request, Response } from 'express';
-import multer from 'multer';
-import path from 'path';
-import fs from 'fs';
+import express, { Request, Response } from "express";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
 
-const { addProduct } = require ('../../controllers/ProductController/productController')
+const {
+  addProduct,
+} = require("../../controllers/ProductController/productController");
 
 const router = express.Router();
 
 const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, 'https://github.com/Sarkheel786Javed/personal_ecommerece_project_client/tree/main/src/uploadedImages/images');
-    if (!fs.existsSync(uploadPath)) {
-      fs.mkdirSync(uploadPath, { recursive: true });
-    }
-    cb(null, uploadPath);
+  destination: function (req, file, cb) {
+    cb(null, "./uploads"); // Destination folder where files will be stored
   },
-  filename: (req, file, cb) => {
-    cb(null, Date.now() + path.extname(file.originalname));
-  }
+  filename: function (req, file, cb) {
+    cb(null, Date.now() + "-" + file.originalname); // File name customization
+  },
 });
 
-const upload = multer({ storage });
+// Initialize multer upload middleware
+const upload = multer({ storage: storage });
 
-router.post('/upload-images', upload.array('images'), (req: Request, res: Response) => {
-  res.json({ message: 'Files uploaded successfully' });
+// Route to handle file upload
+router.post("/upload-images", upload.array("images", 10), (req, res) => {
+  console.log(req.files);
+
+  res.send("Files uploaded successfully.");
 });
 
-
-
-
-router.post('/add-product', addProduct);
+router.post("/add-product", addProduct);
 
 export default router;

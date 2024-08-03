@@ -23,18 +23,9 @@ const storage = multer.diskStorage({
 const upload = multer({ storage });
 
 router.post('/upload-images', upload.array('images'), (req: Request, res: Response) => {
-  try {
-    const imagePaths = (req.files as Express.Multer.File[]).map((file) => ({
-      name: file.originalname,
-      path: `/images/${file.filename}`,
-    }));
-    console.log('Files received:', imagePaths); // Log received files
-    res.json({ imagePaths });
-  } catch (error) {
-    console.error("Error processing images:", error);
-    res.status(500).json({ error: "Internal Server Error" });
-  }
+  res.json({ message: 'Files uploaded successfully' });
 });
+
 
 
 

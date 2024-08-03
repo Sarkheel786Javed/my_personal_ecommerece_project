@@ -2,13 +2,13 @@ import { Request, Response } from 'express';
 import Product from '../../model/ProductModel/ProductModel';
 
  export const addProduct = async (req: Request, res: Response) => {
-  const productData = req.body;
   try {
-    const newProduct = new Product(productData);
+    const newProduct = new Product(req.body); // Assuming ProductModel accepts req.body as input
     await newProduct.save();
-    res.status(201).json({ message: 'Product added successfully' });
+    res.status(201).json(newProduct); // Return the newly created product
   } catch (error) {
-    res.status(500).json({ message: 'Error adding product', error });
+    console.error(error);
+    res.status(500).json({ error: "Failed to add product." });
   }
 };
 // module.exports = {

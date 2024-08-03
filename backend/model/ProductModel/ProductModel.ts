@@ -11,7 +11,8 @@ const ProductSchema = new mongoose.Schema(
     discount: { type: Number, required: true },
     discountType: { type: String, required: true },
     category: { type: String, required: true },
-    imageUrls: [String],   },
+    imageUrls: { type: [String], default: [] },
+  },
   { timestamps: true }
 );
 

@@ -1,67 +1,70 @@
-import express, { Request, Response, NextFunction } from 'express';
-import multer from 'multer';
-import { addProduct } from '../../controllers/ProductController/productController';
-import Product from '../../model/ProductModel/ProductModel';
+import express, { Request, Response } from "express";
+import multer from "multer";
+import ProductModel from "../../model/ProductModel/ProductModel";
+import { addProduct } from "../../controllers/ProductController/productController";
+import path from "path";
 
 const router = express.Router();
 
 // Multer storage configuration
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    cb(null, './uploads/'); // Specify the directory where you want to save uploaded files
+    cb(null, "./uploads/"); // Specify the directory where you want to save uploaded files
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname); // Use the original name of the file as its name on disk
+    cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname)); // Use the original name of the file as its name on disk
   },
 });
-const upload = multer({ storage: storage });
+const upload = multer({ 
+  storage: storage  
+});
 
-// Endpoint to upload images
-router.post('/upload-images', upload.array('images', 10), (req: Request, res: Response) => {
+// Route to upload images and create a new product
+router.post("/upload-images", upload.array("images", 10), async (req: Request, res: Response) => {
   try {
-    const files = req.files as Express.Multer.File[];
-    if (!files || files.length === 0) {
-      return res.status(400).send('No files were uploaded.');
-    }
+    // Extract image URLs from req.files
+    const imageUrls = (req.files as Express.Multer.File[]).map(file => file.path);
 
-    // Example: Process files
-    files.forEach((file) => {
-      console.log(`Received file: ${file.originalname}, size: ${file.size}`);
-    });
+    // Ensure required fields are present before saving
+    const productData = {
+      imageUrls,
+      category: req.body.category,
+      discountType: req.body.discountType,
+      discount: req.body.discount,
+      stock: req.body.stock,
+      price: req.body.price,
+      gender: req.body.gender,
+      size: req.body.size,
+      description: req.body.description, 
+      productName: req.body.productName,
+    };
 
-    res.send(`Successfully received ${files.length} files!`);
+    const newProduct = new ProductModel(productData);
+    const savedProduct = await newProduct.save();
+
+    res.json(savedProduct);
   } catch (error) {
     console.error(error);
-    res.status(500).send('An error occurred while uploading files.');
+    res.status(500).json({ error: "An error occurred while uploading images and creating the product." });
   }
 });
 
-// Endpoint to add a product
-router.post('/add-product', async (req: Request, res: Response) => {
-  try {
-    const newProduct = new Product(req.body); // Assuming ProductModel accepts req.body as input
-    await newProduct.save();
-    res.status(201).json(newProduct); // Return the newly created product
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ error: 'Failed to add product.' });
-  }
-});
+// Route to add a new product
+router.post("/add-product", addProduct);
 
-// Endpoint to get a product by ID
-router.get('/get-product/:id', async (req: Request, res: Response) => {
+// Route to get products
+router.get("/get-products", async (req: Request, res: Response) => {
   try {
-    const productId = req.params.id;
-    const product = await Product.findById(productId);
+    const products = await ProductModel.find();
 
-    if (!product) {
-      return res.status(404).json({ error: 'Product not found' });
+    if (!products || products.length === 0) {
+      return res.status(404).json({ error: "Products not found" });
     }
 
-    res.json(product); // Return the product with imageUrls
+    res.json(products); // Return the products with imageUrls
   } catch (error) {
     console.error(error);
-    res.status(500).json({ error: 'An error occurred while fetching the product.' });
+    res.status(500).json({ error: "An error occurred while fetching the products." });
   }
 });
 

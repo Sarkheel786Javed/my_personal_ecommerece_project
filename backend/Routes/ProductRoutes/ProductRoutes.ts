@@ -6,6 +6,7 @@ import fs from "fs";
 const {
   addProduct,
 } = require("../../controllers/ProductController/productController");
+const formidable = require("express-formidable");
 
 const router = express.Router();
 
@@ -23,7 +24,7 @@ const storage = multer.diskStorage({
 const upload = multer({ storage: storage });
 
 // Route to handle file upload
-router.post("/upload-images", upload.array("images", 10), (req: Request, res: Response) => {
+router.post("/upload-images", upload.array("images", 10), formidable() ,(req: Request, res: Response) => {
   // Log uploaded files information
   console.log(req.files);
 

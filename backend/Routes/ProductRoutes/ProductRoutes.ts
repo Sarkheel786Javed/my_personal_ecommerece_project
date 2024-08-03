@@ -28,12 +28,14 @@ router.post('/upload-images', upload.array('images'), (req: Request, res: Respon
       name: file.originalname,
       path: `/images/${file.filename}`,
     }));
+    console.log('Files received:', imagePaths); // Log received files
     res.json({ imagePaths });
   } catch (error) {
     console.error("Error processing images:", error);
     res.status(500).json({ error: "Internal Server Error" });
   }
 });
+
 
 
 router.post('/add-product', addProduct);

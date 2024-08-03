@@ -17,7 +17,7 @@ app.use(express.static('public')); // Serve static files from 'public' folder
 app.use("/api/user", myUserRoute);
 app.use(express.static("public"));
 /////////////////////////////////////
-app.use("/api/product",express.static(path.join(__dirname, './uploads')), Product);
+app.use("/api/product" , Product);
 ////////////////////////////////////
 
 app.get("/test", async (req: Request, res: Response) => {

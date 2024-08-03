@@ -1,34 +1,33 @@
-import express, { Request, Response } from "express";
-import multer from "multer";
-import path from "path";
-import fs from "fs";
+// Routes/ProductRoutes/ProductRoutes.ts
 
-const {
-  addProduct,
-} = require("../../controllers/ProductController/productController");
+import express, { Request, Response, NextFunction } from 'express';
+import multer from 'multer';
+import {addProduct} from '../../controllers/ProductController/productController';
 
-// Initialize express router
 const router = express.Router();
 
-// Multer storage configuration
-const storage = multer.diskStorage({
-  destination: function (req, file, cb) {
-    cb(null, './uploads'); // Destination folder where files will be stored
-  },
-  filename: function (req, file, cb) {
-    cb(null, Date.now() + '-' + file.originalname); // File name customization
-  },
-});
-
-// Initialize multer upload middleware
+const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Route to handle file upload
-router.post('/upload-images', upload.array('images', 10), (req: Request, res: Response) => {
-  console.log(req.files); // Log uploaded files information
-  res.send('Files uploaded successfully.');
+router.post('/upload-images', upload.array('images', 10), (req: Request, res: Response, next: NextFunction) => {
+  try {
+    const files = req.files as Express.Multer.File[];
+    if (!files) {
+      return res.status(400).send('No files were uploaded.');
+    }
+
+    // Example: Process files
+    files.forEach((file) => {
+      console.log(`Received file: ${file.originalname}, size: ${file.size}`);
+    });
+
+    res.send(`Successfully received ${files.length} files!`);
+  } catch (error) {
+    console.error(error);
+    res.status(500).send('An error occurred while uploading files.');
+  }
 });
 
-router.post("/add-product", addProduct);
+router.post('/add-product', addProduct);
 
 export default router;

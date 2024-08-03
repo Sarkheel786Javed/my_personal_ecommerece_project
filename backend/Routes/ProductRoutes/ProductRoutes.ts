@@ -9,7 +9,7 @@ const router = express.Router();
 
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
-    const uploadPath = path.join(__dirname, '../../public/images');
+    const uploadPath = path.join(__dirname, 'https://github.com/Sarkheel786Javed/personal_ecommerece_project_client/tree/main/src/uploadedImages/images');
     if (!fs.existsSync(uploadPath)) {
       fs.mkdirSync(uploadPath, { recursive: true });
     }

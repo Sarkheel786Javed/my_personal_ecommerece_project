@@ -1,8 +1,9 @@
 import express, { Request, Response } from "express";
 import multer from "multer";
-import ProductModel from "../../model/ProductModel/ProductModel";
-import { addProduct } from "../../controllers/ProductController/productController";
+import ProductModel, { ProductDocument } from "../../model/ProductModel/ProductModel"; // Assuming ProductDocument is the type for your product document
 import path from "path";
+import fs from "fs";
+import { addProduct } from "../../controllers/ProductController/productController";
 
 const router = express.Router();
 
@@ -15,9 +16,7 @@ const storage = multer.diskStorage({
     cb(null, file.fieldname + "_" + Date.now() + path.extname(file.originalname)); // Use the original name of the file as its name on disk
   },
 });
-const upload = multer({ 
-  storage: storage  
-});
+const upload = multer({ storage: storage });
 
 // Route to upload images and create a new product
 router.post("/upload-images", upload.array("images", 10), async (req: Request, res: Response) => {
@@ -35,7 +34,7 @@ router.post("/upload-images", upload.array("images", 10), async (req: Request, r
       price: req.body.price,
       gender: req.body.gender,
       size: req.body.size,
-      description: req.body.description, 
+      description: req.body.description,
       productName: req.body.productName,
     };
 
@@ -49,7 +48,7 @@ router.post("/upload-images", upload.array("images", 10), async (req: Request, r
   }
 });
 
-// Route to add a new product
+// Route to add a new product (assuming addProduct is implemented elsewhere)
 router.post("/add-product", addProduct);
 
 // Route to get products
@@ -61,7 +60,19 @@ router.get("/get-products", async (req: Request, res: Response) => {
       return res.status(404).json({ error: "Products not found" });
     }
 
-    res.json(products); // Return the products with imageUrls
+    // Convert Mongoose documents to plain JavaScript objects
+    const updatedProducts = products.map((product: ProductDocument) => {
+      const verifiedImages = product.imageUrls.filter(imageUrl => {
+        return fs.existsSync(imageUrl);
+      });
+
+      return {
+        ...product.toObject(), // Convert document to plain object
+        imageUrls: verifiedImages,
+      };
+    });
+
+    res.json(updatedProducts);
   } catch (error) {
     console.error(error);
     res.status(500).json({ error: "An error occurred while fetching the products." });

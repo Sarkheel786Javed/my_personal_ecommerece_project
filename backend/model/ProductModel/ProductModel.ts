@@ -3,14 +3,14 @@ import mongoose, { Document } from 'mongoose';
 export interface ProductDocument extends Document {
   category: string;
   discountType: string;
-  discount: String;
-  stock: String;
-  price: String;
+  discount: string;
+  stock: string;
+  price: string;
   gender: string;
   size: string;
   description: string;
   productName: string;
-  images: Buffer[];
+  images: string[]; // Update to string array
 }
 
 const ProductSchema = new mongoose.Schema(
@@ -24,7 +24,7 @@ const ProductSchema = new mongoose.Schema(
     gender: { type: String, required: true },
     size: { type: String, required: true },
     description: { type: String, required: true },
-    images: { type: [Buffer], required: true }, // Change to Buffer
+    images: { type: [String], required: true }, // Change to String array
   },
   { timestamps: true }
 );

@@ -25,11 +25,11 @@ const ProductSchema = new mongoose.Schema(
     stock: { type: String, required: true },
     price: { type: String, required: true },
     gender: { type: String, required: true },
-    size: { type: String, required: true },
-    description: { type: String, required: true },
+    size: { type: String, required: true }, 
+    description: { type: String, required: true }, 
     images: { type: [String], required: true },
-    rating: { type: Number, required: true }, // Add rating field
-    onSale: { type: Boolean, required: true }, // Add onSale field
+    onSale: { type: Boolean, required: true },
+    rating: { type: Number,  },
   },
   { timestamps: true }
 );

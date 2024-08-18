@@ -1,6 +1,5 @@
 import express, { Request, Response } from "express";
 import multer from "multer";
-import ProductModel from "../../model/ProductModel/ProductModel";
 import { addProduct, getProducts } from "../../controllers/ProductController/productController";
 
 const router = express.Router();

@@ -1,3 +1,4 @@
+// model/ProductModel/ProductModel.ts
 import mongoose, { Document } from 'mongoose';
 
 export interface ProductDocument extends Document {
@@ -10,7 +11,9 @@ export interface ProductDocument extends Document {
   size: string;
   description: string;
   productName: string;
-  images: string[]; // Update to string array
+  images: string[];
+  rating: number; // Add rating field
+  onSale: boolean; // Add onSale field
 }
 
 const ProductSchema = new mongoose.Schema(
@@ -24,10 +27,15 @@ const ProductSchema = new mongoose.Schema(
     gender: { type: String, required: true },
     size: { type: String, required: true },
     description: { type: String, required: true },
-    images: { type: [String], required: true }, // Change to String array
+    images: { type: [String], required: true },
+    rating: { type: Number, required: true }, // Add rating field
+    onSale: { type: Boolean, required: true }, // Add onSale field
   },
   { timestamps: true }
 );
+
+// Create a text index on fields you want to search
+ProductSchema.index({ productName: 'text', description: 'text' });
 
 const Product = mongoose.model<ProductDocument>('Product', ProductSchema);
 export default Product;

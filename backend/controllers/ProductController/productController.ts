@@ -45,18 +45,46 @@ export const addProduct = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to add product." });
   }
 };
-export const getProduct = async (req: Request, res: Response) => {
+// Function to get all products
+export const getProducts = async (req: Request, res: Response) => {
   try {
-    const products = await Product.find();
+    // Extract and typecast query parameters
+    const search = req.query.search as string || '';
+    const rating = req.query.rating as string || '0';
+    const onSale = req.query.onSale as string || '0';
+    const productName = req.query.productName as string || '';
+
+    // Build query object based on filters
+    const query: any = {};
+
+    if (search && search.trim() !== '') {
+      query.$text = { $search: search }; // For full-text search
+    }
+
+    if (rating && rating !== '0') {
+      const parsedRating = parseFloat(rating);
+      if (!isNaN(parsedRating)) {
+        query.rating = { $gte: parsedRating }; // Filter by rating (greater than or equal to)
+      }
+    }
+
+    if (onSale && onSale !== '0') {
+      query.onSale = onSale === 'true'; // Filter by onSale status
+    }
+
+    if (productName && productName.trim() !== '') {
+      query.productName = { $regex: new RegExp(productName, 'i') }; // Case-insensitive search by product name
+    }
+
+    const products = await Product.find(query);
 
     if (!products || products.length === 0) {
-      return res.status(404).json({ error: "Products not found" });
+      return res.status(404).json({ error: 'Products not found' });
     }
+
     res.json(products);
   } catch (error) {
-    console.error("Error:", error); // Logging the error
-    res
-      .status(500)
-      .json({ error: "An error occurred while fetching the products." });
+    console.error('Error:', error); // Logging the error
+    res.status(500).json({ error: 'An error occurred while fetching the products.' });
   }
-}
+};

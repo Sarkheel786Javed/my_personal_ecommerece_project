@@ -4,8 +4,7 @@ import "dotenv/config";
 import connectDB from "./dbconfig/db";
 import myUserRoute from "./Routes/Auth";
 import Product from "./Routes/ProductRoutes/ProductRoutes";
-import path from "path";
-
+import ProductCategoryRoutes from './Routes/ProductRoutes/ProductCategoryRoutes'
 connectDB();
 const app = express();
 app.use(express.json());
@@ -17,6 +16,7 @@ app.use(express.static('public')); // Serve static files from 'public' folder
 app.use("/api/user", myUserRoute);
 app.use(express.static("public"));
 /////////////////////////////////////
+app.use("/api/product/category" , ProductCategoryRoutes);
 app.use("/api/product" , Product);
 ////////////////////////////////////
 

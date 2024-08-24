@@ -3,39 +3,39 @@ const userSchema = new mongoose.Schema(
   {
     userName: {
       type: String,
-      require: true
+      require: true,
     },
     answer: {
       type: String,
-      require: true
+      require: true,
     },
     phoneNumbber: {
       type: String,
-      require: true
+      require: true,
     },
     addressLine1: {
       type: String,
-      require: true
+      require: true,
     },
     city: {
       type: String,
-      require: true
+      require: true,
     },
     country: {
       type: String,
-      require: true
+      require: true,
     },
     email: {
       type: String,
-      require: true
+      require: true,
     },
     password: {
       type: String,
-      require: true
+      require: true,
     },
     Organization: {
       type: String,
-      default:"User"
+      default: "User",
     },
   },
   { timestamps: true }

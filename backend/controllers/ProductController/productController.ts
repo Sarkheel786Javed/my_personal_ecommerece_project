@@ -3,11 +3,18 @@ import cloudinary from "../../config/cloudinaryConfig"; // Adjust the path as ne
 import Product from "../../model/ProductModel/ProductModel";
 import { Readable } from "stream";
 
-export const addProduct = async (req: Request, res: Response) => {
+// Regular expression to validate MongoDB ObjectId
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+
+const isValidObjectId = (id: string): boolean => {
+  return objectIdRegex.test(id);
+};
+
+export const addOrUpdateProduct = async (req: Request, res: Response) => {
   try {
-    // Convert uploaded files to readable streams
     const imageFiles = req.files as Express.Multer.File[];
 
+    // Upload images to Cloudinary
     const uploadPromises = imageFiles.map((file) => {
       return new Promise<string>((resolve, reject) => {
         const uploadStream = cloudinary.v2.uploader.upload_stream(
@@ -30,21 +37,43 @@ export const addProduct = async (req: Request, res: Response) => {
     });
 
     const imageUrls = await Promise.all(uploadPromises);
-
-    // Create a new product with image data
+    // Prepare product data
     const productData = {
       ...req.body,
-      images: imageUrls, // Save Cloudinary URLs
+      images: imageUrls,
     };
 
-    const newProduct = new Product(productData);
-    await newProduct.save();
-    res.status(201).json(newProduct);
-  } catch (error) {
-    console.error("Error:", error);
-    res.status(500).json({ error: "Failed to add product." });
+    const productId = req.body._id;
+
+    if (productId && isValidObjectId(productId)) {
+      // Update existing product
+      const updatedProduct = await Product.findByIdAndUpdate(
+        productId,
+        productData,
+        { new: true }
+      );
+      if (!updatedProduct) {
+        return res.status(404).json({ error: "Product not found" });
+      }
+      res.status(200).json({
+        message: "Product updated successfully",
+        // product: updatedProduct,
+      });
+    } else {
+      // Add new product
+      const newProduct = new Product(productData);
+      await newProduct.save();
+      res.status(201).json({
+        message: "Product added successfully",
+        // product: newProduct,
+      });
+    }
+  } catch (err) {
+    console.error("Error:", err);
+    res.status(500).json({ error: "Failed to add or update product.",err});
   }
 };
+
 // Function to get all products
 export const getProducts = async (req: Request, res: Response) => {
   try {
@@ -75,12 +104,16 @@ export const getProducts = async (req: Request, res: Response) => {
     const products = await Product.find(query);
 
     if (products.length === 0) {
-      return res.status(404).json({ error: "No products found matching the criteria." });
+      return res
+        .status(404)
+        .json({ error: "No products found matching the criteria." });
     }
 
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
-    res.status(500).json({ error: "An error occurred while fetching the products." });
+    res
+      .status(500)
+      .json({ error: "An error occurred while fetching the products." });
   }
 };

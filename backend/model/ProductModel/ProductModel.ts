@@ -14,6 +14,7 @@ export interface ProductDocument extends Document {
   images: string[];
   rating: number; // Add rating field
   onSale: boolean; // Add onSale field
+  featured:boolean
 }
 
 const ProductSchema = new mongoose.Schema(
@@ -28,8 +29,9 @@ const ProductSchema = new mongoose.Schema(
     size: { type: String, required: true }, 
     description: { type: String, required: true }, 
     images: { type: [String], required: true },
-    onSale: { type: Boolean, required: true },
-    rating: { type: Number,  },
+    onSale: { type: Boolean, default: false },
+    rating: { type: Number, default: 0  },
+    featured:  { type: Boolean, default: false },
   },
   { timestamps: true }
 );

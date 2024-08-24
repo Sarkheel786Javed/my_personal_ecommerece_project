@@ -10,7 +10,7 @@ const upload = multer({ storage });
 
 // Route to add a product with images
 router.post('/add-product', upload.array('images', 10), addOrUpdateProduct);
-router.delete('/delete-product/:productId', deleteProduct);
+router.delete('/delete-product/:productId', deleteProduct); 
 
 // Route to get products
 router.get("/get-products", getProducts)

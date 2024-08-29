@@ -38,7 +38,6 @@ export const createCategoryController = async (req: Request, res: Response) => {
     res.status(201).send({
       success: true,
       message: "New category created",
-      category,
     });
   } catch (error) {
     console.log(error);
@@ -50,6 +49,38 @@ export const createCategoryController = async (req: Request, res: Response) => {
   }
 };
 
-// Register the route
+export const getCategoryController = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.query; // Use query parameter to optionally pass userId
 
-export default router;
+    let categories;
+
+    if (userId) {
+      // If userId is provided, filter categories by userId
+      categories = await categoryModel.find({ userId });
+    } else {
+      // If no userId is provided, retrieve all categories
+      categories = await categoryModel.find();
+    }
+
+    if (categories.length === 0) {
+      return res.status(404).send({
+        success: false,
+        message: "No categories found",
+      });
+    }
+
+    res.status(200).send({
+      success: true,
+      categories,
+    });
+  } catch (error) {
+    console.error("Error fetching categories:", error);
+    res.status(500).send({
+      success: false,
+      error,
+      message: "Error fetching categories",
+    });
+  }
+};
+

@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
-import cloudinary from "../../config/cloudinaryConfig"; // Adjust the path as necessary
+import cloudinary from "../../config/cloudinaryConfig";
 import Product from "../../model/ProductModel/ProductModel";
 import { Readable } from "stream";
+import mongoose from "mongoose";
 
-// Regular expression to validate MongoDB ObjectId
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const isValidObjectId = (id: string): boolean => {
@@ -37,27 +37,52 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
     });
 
     const imageUrls = await Promise.all(uploadPromises);
+
+    const {
+      _id,
+      organizationName,
+      organizationUserId,
+      categoryId,
+      ...otherData
+    } = req.body;
+
+    // Convert categoryId into an array and cast each ID to ObjectId
+    let categoryIdsArray: mongoose.Types.ObjectId[] = [];
+    try {
+      categoryIdsArray = (
+        Array.isArray(categoryId)
+          ? categoryId
+          : typeof categoryId === "string"
+          ? categoryId.split(",")
+          : []
+      )
+        .map((id) => id.trim())
+        .filter((id) => isValidObjectId(id)) // Validate ID format
+        .map((id) => new mongoose.Types.ObjectId(id));
+    } catch (error) {
+      console.error("Error converting categoryId to ObjectId:", error);
+    }
+
     // Prepare product data
     const productData = {
-      ...req.body,
+      ...otherData,
       images: imageUrls,
+      organizationName,
+      organizationUserId,
+      categoryId: categoryIdsArray, // Save categoryId as an array
     };
 
-    const productId = req.body._id;
-
-    if (productId && isValidObjectId(productId)) {
+    if (_id && isValidObjectId(_id)) {
       // Update existing product
-      const updatedProduct = await Product.findByIdAndUpdate(
-        productId,
-        productData,
-        { new: true }
-      );
+      const updatedProduct = await Product.findByIdAndUpdate(_id, productData, {
+        new: true,
+      });
       if (!updatedProduct) {
         return res.status(404).json({ error: "Product not found" });
       }
       res.status(200).json({
         message: "Product updated successfully",
-        // product: updatedProduct,
+        product: updatedProduct,
       });
     } else {
       // Add new product
@@ -65,12 +90,12 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
       await newProduct.save();
       res.status(201).json({
         message: "Product added successfully",
-        // product: newProduct,
+        product: newProduct,
       });
     }
   } catch (err) {
     console.error("Error:", err);
-    res.status(500).json({ error: "Failed to add or update product.",err});
+    res.status(500).json({ error: "Failed to add or update product.", err });
   }
 };
 

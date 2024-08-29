@@ -1,8 +1,7 @@
 // model/ProductModel/ProductModel.ts
-import mongoose, { Document } from 'mongoose';
+import mongoose, { Document } from "mongoose";
 
 export interface ProductDocument extends Document {
-  category: string;
   discountType: string;
   discount: string;
   stock: string;
@@ -12,32 +11,40 @@ export interface ProductDocument extends Document {
   description: string;
   productName: string;
   images: string[];
-  rating: number; // Add rating field
-  onSale: boolean; // Add onSale field
-  featured:boolean
+  rating: number;
+  onSale: boolean;
+  featured: boolean;
+  organizationName: string; 
+  organizationUserId: mongoose.Schema.Types.ObjectId;
+  categoryId: mongoose.Schema.Types.ObjectId;
 }
 
 const ProductSchema = new mongoose.Schema(
   {
     productName: { type: String, required: true },
-    category: { type: String, required: true },
     discountType: { type: String, required: true },
     discount: { type: String, required: true },
     stock: { type: String, required: true },
     price: { type: String, required: true },
     gender: { type: String, required: true },
-    size: { type: String, required: true }, 
-    description: { type: String, required: true }, 
+    size: { type: String, required: true },
+    description: { type: String, required: true },
     images: { type: [String], required: true },
     onSale: { type: Boolean, default: false },
-    rating: { type: Number, default: 0  },
-    featured:  { type: Boolean, default: false },
+    rating: { type: Number, default: 0 },
+    featured: { type: Boolean, default: false },
+    organizationName: { type: String, required: true },
+    organizationUserId: {
+      type: mongoose.Schema.Types.ObjectId,
+      ref: "User",
+      required: true,
+    },
+    categoryId: [{ type: mongoose.Schema.Types.ObjectId, ref: "Category" }],
   },
   { timestamps: true }
 );
 
-// Create a text index on fields you want to search
-ProductSchema.index({ productName: 'text', description: 'text' });
+ProductSchema.index({ productName: "text", description: "text" });
 
-const Product = mongoose.model<ProductDocument>('Product', ProductSchema);
+const Product = mongoose.model<ProductDocument>("Product", ProductSchema);
 export default Product;

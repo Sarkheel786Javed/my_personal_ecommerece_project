@@ -1,101 +1,187 @@
 import { Request, Response } from "express";
 import cloudinary from "../../config/cloudinaryConfig";
 import Product from "../../model/ProductModel/ProductModel";
-import { Readable } from "stream";
-import mongoose from "mongoose";
-
+const categoryModel = require("../../model/ProductModel/ProductCategoryModel");
+import userModel from '../../model/user';
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const isValidObjectId = (id: string): boolean => {
   return objectIdRegex.test(id);
 };
-
-export const addOrUpdateProduct = async (req: Request, res: Response) => {
+export const createOrUpdateProductController = async (
+  req: Request,
+  res: Response
+) => {
   try {
-    const imageFiles = req.files as Express.Multer.File[];
-
-    // Upload images to Cloudinary
-    const uploadPromises = imageFiles.map((file) => {
-      return new Promise<string>((resolve, reject) => {
-        const uploadStream = cloudinary.v2.uploader.upload_stream(
-          { resource_type: "image" },
-          (error, result) => {
-            if (error) {
-              console.error("Cloudinary upload error:", error);
-              return reject(error);
-            }
-            if (result && result.secure_url) {
-              resolve(result.secure_url);
-            } else {
-              reject(new Error("Upload result is missing secure_url"));
-            }
-          }
-        );
-
-        Readable.from(file.buffer).pipe(uploadStream);
-      });
-    });
-
-    const imageUrls = await Promise.all(uploadPromises);
-
     const {
       _id,
+      productName,
+      discountType,
+      discount,
+      stock,
+      price,
+      gender,
+      size,
+      description,
+      rating,
+      onSale,
+      featured,
       organizationName,
       organizationUserId,
       categoryId,
-      ...otherData
+      images,
     } = req.body;
 
-    // Convert categoryId into an array and cast each ID to ObjectId
-    let categoryIdsArray: mongoose.Types.ObjectId[] = [];
-    try {
-      categoryIdsArray = (
-        Array.isArray(categoryId)
-          ? categoryId
-          : typeof categoryId === "string"
-          ? categoryId.split(",")
-          : []
+    // Validations
+    if (!productName || typeof productName !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing product name" });
+    }
+
+    if (!discountType || typeof discountType !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing discount type" });
+    }
+
+    if (!discount || isNaN(Number(discount))) {
+      return res.status(400).json({ message: "Invalid or missing discount" });
+    }
+
+    if (!stock || isNaN(Number(stock))) {
+      return res.status(400).json({ message: "Invalid or missing stock" });
+    }
+
+    if (!price || isNaN(Number(price))) {
+      return res.status(400).json({ message: "Invalid or missing price" });
+    }
+
+    if (!gender || typeof gender !== "string") {
+      return res.status(400).json({ message: "Invalid or missing gender" });
+    }
+
+    if (!size || typeof size !== "string") {
+      return res.status(400).json({ message: "Invalid or missing size" });
+    }
+
+    if (!description || typeof description !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing description" });
+    }
+
+    // if (rating !== undefined && isNaN(Number(rating))) {
+    //   return res.status(400).json({ message: "Invalid rating" });
+    // }
+
+    // if (onSale !== undefined && typeof onSale !== "boolean") {
+    //   return res.status(400).json({ message: "Invalid onSale value" });
+    // }
+
+    // if (featured !== undefined && typeof featured !== "boolean") {
+    //   return res.status(400).json({ message: "Invalid featured value" });
+    // }
+
+    if (!organizationName || typeof organizationName !== "string") {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing organization name" });
+    }
+
+    if (!organizationUserId || !organizationUserId.match(/^[0-9a-fA-F]{24}$/)) {
+      return res.status(400).json({ message: "Invalid organization user ID" });
+    }
+
+    if (
+      !Array.isArray(categoryId) ||
+      categoryId.length === 0 ||
+      !categoryId.every(
+        (id: any) => typeof id === "string" && id.match(/^[0-9a-fA-F]{24}$/)
       )
-        .map((id) => id.trim())
-        .filter((id) => isValidObjectId(id)) // Validate ID format
-        .map((id) => new mongoose.Types.ObjectId(id));
-    } catch (error) {
-      console.error("Error converting categoryId to ObjectId:", error);
+    ) {
+      return res
+        .status(400)
+        .json({ message: "Invalid or missing category IDs" });
+    }
+
+    if (images && !Array.isArray(images)) {
+      return res.status(400).json({ message: "Images should be an array" });
+    }
+
+    // Validate user
+    const user = await userModel.findById(organizationUserId);
+    if (!user) {
+      return res.status(404).json({ message: "User not found" });
+    }
+
+    // Validate category IDs
+    const validCategoryIds = await categoryModel.find({
+      _id: { $in: categoryId },
+    });
+    if (validCategoryIds.length !== categoryId.length) {
+      return res
+        .status(400)
+        .json({ message: "One or more category IDs are invalid" });
+    }
+
+    // Handle images upload
+    const imageUrls: string[] = [];
+    if (images && images.length > 0) {
+      for (const image of images) {
+        const result = await cloudinary.v2.uploader.upload(image, {
+          folder: "products",
+        });
+        imageUrls.push(result.secure_url);
+      }
     }
 
     // Prepare product data
     const productData = {
-      ...otherData,
-      images: imageUrls,
+      productName,
+      discountType,
+      discount,
+      stock,
+      price,
+      gender,
+      size,
+      description,
+      rating,
+      onSale,
+      featured,
       organizationName,
       organizationUserId,
-      categoryId: categoryIdsArray, // Save categoryId as an array
+      categoryId,
+      images: imageUrls,
     };
 
-    if (_id && isValidObjectId(_id)) {
-      // Update existing product
-      const updatedProduct = await Product.findByIdAndUpdate(_id, productData, {
+    // Create or update product
+    let product;
+    if (_id) {
+      product = await Product.findByIdAndUpdate(_id, productData, {
         new: true,
       });
-      if (!updatedProduct) {
-        return res.status(404).json({ error: "Product not found" });
+      if (!product) {
+        return res.status(404).json({ message: "Product not found" });
       }
-      res.status(200).json({
-        message: "Product updated successfully",
-        product: updatedProduct,
-      });
     } else {
-      // Add new product
-      const newProduct = new Product(productData);
-      await newProduct.save();
-      res.status(201).json({
-        message: "Product added successfully",
-        product: newProduct,
-      });
+      product = await new Product(productData).save();
     }
-  } catch (err) {
-    console.error("Error:", err);
-    res.status(500).json({ error: "Failed to add or update product.", err });
+
+    res.status(201).json({
+      success: true,
+      message: _id
+        ? "Product updated successfully"
+        : "Product created successfully",
+      product,
+    });
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({
+      success: false,
+      error,
+      message: "Error in Product creation/updation",
+    });
   }
 };
 

@@ -2,7 +2,8 @@ const JWT = require("jsonwebtoken");
 const userModel = require("../model/user");
 
 //Protected Routes token base
-const requireSignIn = async (req:any, res:any, next:any) => {
+const requireSignIn
+ = async (req:any, res:any, next:any) => {
   try {
     const decode = JWT.verify(
       req.headers.authorization,

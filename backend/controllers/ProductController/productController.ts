@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { Request, response, Response } from "express";
 import cloudinary from "../../config/cloudinaryConfig";
 import Product from "../../model/ProductModel/ProductModel";
 const categoryModel = require("../../model/ProductModel/ProductCategoryModel");
@@ -82,19 +82,23 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
         new: true,
       });
       if (!updatedProduct) {
-        return res.status(404).json({ error: "Product not found" });
+        return res.status(404).json({ 
+          response: false,
+          error: "Product not found" });
       }
       res.status(200).json({
         message: "Product updated successfully",
-        product: updatedProduct,
+        response: true,
+        // product: updatedProduct,
       });
     } else {
       // Add new product
       const newProduct = new Product(productData);
       await newProduct.save();
       res.status(201).json({
+        response: true,
         message: "Product added successfully",
-        product: newProduct,
+        // product: newProduct,
       });
     }
   } catch (err) {
@@ -104,48 +108,62 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
 };
 
 // Function to get all products
+// Function to get all products
 export const getProducts = async (req: Request, res: Response) => {
   try {
-    const search = (req.query.search as string) || "";
+    const featured = (req.query.featured as string) || "0";
     const rating = (req.query.rating as string) || "0";
     const onSale = (req.query.onSale as string) || "0";
     const productName = (req.query.productName as string) || "";
 
     const query: any = {};
 
-    if (search.trim() !== "") {
-      query.$text = { $search: search };
+    // Search by product name using regex (case-insensitive)
+    if (productName.trim() !== "") {
+      query.productName = { $regex: new RegExp(productName, "i") };
     }
 
+    // Filter by rating if a valid rating is provided
     const parsedRating = parseFloat(rating);
     if (!isNaN(parsedRating) && parsedRating > 0) {
       query.rating = { $gte: parsedRating };
     }
 
-    if (onSale !== "0") {
-      query.onSale = onSale === "true";
+    // Handle both `onSale` and `featured` filters
+    if (onSale === "true" && featured === "true") {
+      // When both onSale and featured are true
+      query.$and = [{ onSale: true }, { featured: true }];
+    } else {
+      // Handle individual filters
+      if (onSale === "true") {
+        query.onSale = true;
+      }
+      else if (featured === "true") {
+        query.featured = true;
+      }
     }
 
-    if (productName.trim() !== "") {
-      query.productName = { $regex: new RegExp(productName, "i") };
-    }
-
-    const products = await Product.find(query);
+// Fetch products based on the query and sort by latest (newest on top)
+const products = await Product.find(query).sort({ createdAt: -1 });
 
     if (products.length === 0) {
-      return res
-        .status(404)
-        .json({ error: "No products found matching the criteria." });
+      return res.status(404).json({
+        response: false,
+        error: "No products found matching the criteria.",
+      });
     }
 
+    // Return the products
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
-    res
-      .status(500)
-      .json({ error: "An error occurred while fetching the products." });
+    res.status(500).json({
+      response: false,
+      error: "An error occurred while fetching the products.",
+    });
   }
 };
+
 
 export const deleteProduct = async (req: Request, res: Response) => {
   try {
@@ -153,22 +171,29 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     // Validate productId
     if (!productId || !isValidObjectId(productId)) {
-      return res.status(400).json({ error: "Invalid product ID" });
+      return res.status(400).json({ 
+        response: false,
+        error: "Invalid product ID" });
     }
 
     // Find and delete the product
     const deletedProduct = await Product.findByIdAndDelete(productId);
 
     if (!deletedProduct) {
-      return res.status(404).json({ error: "Product not found" });
+      return res.status(404).json({ 
+        response: false,
+        error: "Product not found" });
     }
 
     res.status(200).json({
+      response: true,
       message: "Product deleted successfully",
       // product: deletedProduct, // Optional: return the deleted product if needed
     });
   } catch (err) {
     console.error("Error deleting product:", err);
-    res.status(500).json({ error: "Failed to delete product", err });
+    res.status(500).json({ 
+      response: false,
+      error: "Failed to delete product", err });
   }
 };

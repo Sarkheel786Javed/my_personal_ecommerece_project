@@ -51,17 +51,32 @@ export const createCategoryController = async (req: Request, res: Response) => {
 
 export const getCategoryController = async (req: Request, res: Response) => {
   try {
-    const { userId } = req.query; // Use query parameter to optionally pass userId
-
+    const { organization, searchString, page , pageSize } = req.query;
+    const pageNum = parseInt(page as string);
+    const size = parseInt(pageSize as string);
     let categories;
 
-    if (userId) {
-      // If userId is provided, filter categories by userId
-      categories = await categoryModel.find({ userId });
-    } else {
-      // If no userId is provided, retrieve all categories
-      categories = await categoryModel.find();
+    const query: any = {}; // Create query object
+
+    // Build the query based on organization and searchString
+    if (organization === 'department') {
+      query.organization = 'department';
+    } else if (organization === 'user') {
+      query.organization = 'user';
     }
+
+    if (searchString) {
+      query.name = { $regex: searchString, $options: 'i' }; // Add regex filter for name
+    }
+
+    // Fetch the total number of categories that match the query
+    const totalCategories = await categoryModel.countDocuments(query);
+
+    // Apply pagination using skip and limit
+    categories = await categoryModel
+      .find(query)
+      .skip(pageNum * size)
+      .limit(size);
 
     if (categories.length === 0) {
       return res.status(404).send({
@@ -70,10 +85,17 @@ export const getCategoryController = async (req: Request, res: Response) => {
       });
     }
 
-    res.status(200).send({
-      success: true,
-      categories,
-    });
+    // Add totalCategories and totalPages to each category object but return only specific fields
+    const categoriesWithPaginationInfo = categories.map((category:any) => ({
+      _id: category._id,
+      categoryName: category.categoryName,
+      organization: category.organization,
+      totalCategories: totalCategories,
+      totalPages: Math.ceil(totalCategories / size),
+    }));
+
+    // Return the paginated response with required fields only
+    res.json(categoriesWithPaginationInfo)
   } catch (error) {
     console.error("Error fetching categories:", error);
     res.status(500).send({
@@ -83,4 +105,7 @@ export const getCategoryController = async (req: Request, res: Response) => {
     });
   }
 };
+
+
+
 

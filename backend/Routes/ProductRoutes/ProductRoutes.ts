@@ -4,15 +4,13 @@ import { addOrUpdateProduct, getProducts, deleteProduct } from "../../controller
 
 const router = express.Router();
 
-// Set up multer to handle file uploads
 const storage = multer.memoryStorage();
 const upload = multer({ storage });
 
-// Route to add a product with images
 router.post('/add-product', upload.array('images', 6), addOrUpdateProduct);
-router.delete('/delete-product/:productId', deleteProduct); 
 
-// Route to get products
 router.get("/get-products", getProducts)
+
+router.delete('/delete-product/:productId', deleteProduct); 
 
 export default router;

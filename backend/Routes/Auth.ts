@@ -4,6 +4,7 @@ const {
     loginController,
     forgotPasswordController,
     getSingleuser,
+    getUsersByDepartment,
     regenerateToken
 } = require('../controllers/MyUserControllers');
 
@@ -20,6 +21,9 @@ router.post('/regenerate-token', regenerateToken);
 
 // Route for getting a single user (protected route)
 router.get('/user/:userId', getSingleuser);
+
+// Route for getting  user Department
+router.get('/getalldepartment/:organization', getUsersByDepartment);
 
 // Route for forgot password
 router.post('/forgot-password', forgotPasswordController);

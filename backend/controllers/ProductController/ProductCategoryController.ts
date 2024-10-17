@@ -1,5 +1,5 @@
 import express, { Request, Response } from "express";
-const categoryModel = require ("../../model/ProductModel/ProductCategoryModel")
+const categoryModel = require("../../model/ProductModel/ProductCategoryModel")
 import userModel from "../../model/user";
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
@@ -23,7 +23,7 @@ export const createCategoryController = async (req: Request, res: Response) => {
       return res.status(404).send({ message: "User not found" });
     }
 
-    if (categoryId) {
+    if (categoryId > "0") {
       // If categoryId is provided, update the existing category
       const category = await categoryModel.findById(categoryId);
 
@@ -89,9 +89,6 @@ export const createCategoryController = async (req: Request, res: Response) => {
   }
 };
 
-
-
-
 export const getCategoryController = async (req: Request, res: Response) => {
   try {
     const { userId, searchString } = req.query;
@@ -102,7 +99,7 @@ export const getCategoryController = async (req: Request, res: Response) => {
     if (userId) {
       query.userId = userId;
     }
-    
+
     if (searchString) {
       query.categoryName = { $regex: searchString, $options: 'i' };
     }
@@ -132,17 +129,19 @@ export const deleteProductCategory = async (req: Request, res: Response) => {
     const { productCategoryId } = req.params;
 
     if (!productCategoryId || !isValidObjectId(productCategoryId)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         response: false,
-        error: "Invalid Category ID" });
+        error: "Invalid Category ID"
+      });
     }
 
     const deletedProduct = await categoryModel.findByIdAndDelete(productCategoryId);
 
     if (!deletedProduct) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         response: false,
-        error: "Product Category not found" });
+        error: "Product Category not found"
+      });
     }
 
     res.status(200).json({
@@ -152,9 +151,10 @@ export const deleteProductCategory = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error deleting product category:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       response: false,
-      error: "Failed to delete product category", err });
+      error: "Failed to delete product category", err
+    });
   }
 };
 

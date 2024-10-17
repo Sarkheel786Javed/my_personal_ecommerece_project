@@ -236,6 +236,33 @@ const getSingleuser = async (req: Request, res: Response) => {
   }
 };
 
+// Get users where Organization is 'department'
+const getUsersByDepartment = async (req: Request, res: Response) => {
+  try {
+    const organization = req.params.organization;
+
+    const departmentUsers = await userModel
+      .find({ Organization: { $regex: new RegExp(`^${organization}$`, 'i') } })
+      .sort({ createdAt: -1 });
+
+    if (!departmentUsers.length) {
+      return res.status(404).json({
+        success: false,
+        message: "No users found in the department.",
+      });
+    }
+
+    res.json(departmentUsers);
+  } catch (error) {
+    console.error("Error in getUsersByDepartment:", error);
+    res.status(500).json({
+      success: false,
+      message: "Failed to retrieve users",
+      error: error, 
+    });
+  }
+};
+
 //forgotPasswordController
 
 const forgotPasswordController = async (req: Request, res: Response) => {
@@ -422,7 +449,8 @@ module.exports = {
   loginController,
   forgotPasswordController,
   getSingleuser,
-  regenerateToken
+  regenerateToken,
+  getUsersByDepartment
 };
 // module.exports = {
 //   registerController

@@ -57,8 +57,8 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
         Array.isArray(categoryId)
           ? categoryId
           : typeof categoryId === "string"
-          ? categoryId.split(",")
-          : []
+            ? categoryId.split(",")
+            : []
       )
         .map((id) => id.trim())
         .filter((id) => isValidObjectId(id)) // Validate ID format
@@ -82,9 +82,10 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
         new: true,
       });
       if (!updatedProduct) {
-        return res.status(404).json({ 
+        return res.status(404).json({
           response: false,
-          error: "Product not found" });
+          error: "Product not found"
+        });
       }
       res.status(200).json({
         message: "Product updated successfully",
@@ -107,34 +108,39 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
   }
 };
 
-// Function to get all products
-// Function to get all products
 export const getProducts = async (req: Request, res: Response) => {
   try {
     const featured = (req.query.featured as string) || "0";
     const rating = (req.query.rating as string) || "0";
     const onSale = (req.query.onSale as string) || "0";
     const productName = (req.query.productName as string) || "";
+    const organizationUserId = req.query.organizationUserId as string;
+
+    if (!isValidObjectId(organizationUserId)) {
+      return res.status(400).json({
+        response: false,
+        error: "UserId is required to fetch products.",
+      });
+    }
 
     const query: any = {};
 
-    // Search by product name using regex (case-insensitive)
+    if (organizationUserId) {
+      query.organizationUserId = organizationUserId;
+    }
+
     if (productName.trim() !== "") {
       query.productName = { $regex: new RegExp(productName, "i") };
     }
 
-    // Filter by rating if a valid rating is provided
     const parsedRating = parseFloat(rating);
     if (!isNaN(parsedRating) && parsedRating > 0) {
       query.rating = { $gte: parsedRating };
     }
 
-    // Handle both `onSale` and `featured` filters
     if (onSale === "true" && featured === "true") {
-      // When both onSale and featured are true
       query.$and = [{ onSale: true }, { featured: true }];
     } else {
-      // Handle individual filters
       if (onSale === "true") {
         query.onSale = true;
       }
@@ -143,8 +149,7 @@ export const getProducts = async (req: Request, res: Response) => {
       }
     }
 
-// Fetch products based on the query and sort by latest (newest on top)
-const products = await Product.find(query).sort({ createdAt: -1 });
+    const products = await Product.find(query).sort({ createdAt: -1 });
 
     if (products.length === 0) {
       return res.status(404).json({
@@ -153,7 +158,6 @@ const products = await Product.find(query).sort({ createdAt: -1 });
       });
     }
 
-    // Return the products
     res.json(products);
   } catch (error) {
     console.error("Error fetching products:", error);
@@ -171,18 +175,20 @@ export const deleteProduct = async (req: Request, res: Response) => {
 
     // Validate productId
     if (!productId || !isValidObjectId(productId)) {
-      return res.status(400).json({ 
+      return res.status(400).json({
         response: false,
-        error: "Invalid product ID" });
+        error: "Invalid product ID"
+      });
     }
 
     // Find and delete the product
     const deletedProduct = await Product.findByIdAndDelete(productId);
 
     if (!deletedProduct) {
-      return res.status(404).json({ 
+      return res.status(404).json({
         response: false,
-        error: "Product not found" });
+        error: "Product not found"
+      });
     }
 
     res.status(200).json({
@@ -192,8 +198,9 @@ export const deleteProduct = async (req: Request, res: Response) => {
     });
   } catch (err) {
     console.error("Error deleting product:", err);
-    res.status(500).json({ 
+    res.status(500).json({
       response: false,
-      error: "Failed to delete product", err });
+      error: "Failed to delete product", err
+    });
   }
 };

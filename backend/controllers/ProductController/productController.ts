@@ -18,7 +18,7 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
   try {
     const imageFiles = req.files as Express.Multer.File[];
 
-    // Upload images to Cloudinary
+    // Upload new images to Cloudinary if any new files are provided
     const uploadPromises = imageFiles.map((file) => {
       return new Promise<string>((resolve, reject) => {
         const uploadStream = cloudinary.v2.uploader.upload_stream(
@@ -35,18 +35,18 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
             }
           }
         );
-
         Readable.from(file.buffer).pipe(uploadStream);
       });
     });
 
-    const imageUrls = await Promise.all(uploadPromises);
+    const newImageUrls = await Promise.all(uploadPromises);
 
     const {
       _id,
       organizationName,
       organizationUserId,
       categoryId,
+      existingImageUrls = [], // Get existing image URLs from the request
       ...otherData
     } = req.body;
 
@@ -67,10 +67,16 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
       console.error("Error converting categoryId to ObjectId:", error);
     }
 
+    // Combine existing image URLs with new uploaded image URLs
+    const allImageUrls = [
+      ...(Array.isArray(existingImageUrls) ? existingImageUrls : [existingImageUrls]),
+      ...newImageUrls,
+    ];
+
     // Prepare product data
     const productData = {
       ...otherData,
-      images: imageUrls,
+      images: allImageUrls, // Set both existing and new URLs
       organizationName,
       organizationUserId,
       categoryId: categoryIdsArray, // Save categoryId as an array
@@ -84,7 +90,7 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
       if (!updatedProduct) {
         return res.status(404).json({
           response: false,
-          error: "Product not found"
+          error: "Product not found",
         });
       }
       res.status(200).json({
@@ -107,6 +113,7 @@ export const addOrUpdateProduct = async (req: Request, res: Response) => {
     res.status(500).json({ error: "Failed to add or update product.", err });
   }
 };
+
 
 export const getProducts = async (req: Request, res: Response) => {
   try {

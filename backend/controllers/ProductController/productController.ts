@@ -122,17 +122,9 @@ export const getProducts = async (req: Request, res: Response) => {
     const onSale = (req.query.onSale as string) || "0";
     const productName = (req.query.productName as string) || "";
     const organizationUserId = req.query.organizationUserId as string;
-
-    if (!isValidObjectId(organizationUserId)) {
-      return res.status(400).json({
-        response: false,
-        error: "UserId is required to fetch products.",
-      });
-    }
-
     const query: any = {};
 
-    if (organizationUserId) {
+    if (organizationUserId && isValidObjectId(organizationUserId)) {
       query.organizationUserId = organizationUserId;
     }
 

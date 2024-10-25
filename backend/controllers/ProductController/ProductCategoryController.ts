@@ -96,7 +96,7 @@ export const getCategoryController = async (req: Request, res: Response) => {
     let categories;
 
     const query: any = {};
-    if (userId) {
+    if (userId && userId) {
       query.userId = userId;
     }
 

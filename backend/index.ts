@@ -4,7 +4,8 @@ import "dotenv/config";
 import connectDB from "./dbconfig/db";
 import myUserRoute from "./Routes/Auth";
 import Product from "./Routes/ProductRoutes/ProductRoutes";
-import ProductCategoryRoutes from './Routes/ProductRoutes/ProductCategoryRoutes'
+import ProductCategoryRoutes from './Routes/ProductRoutes/ProductCategoryRoutes';
+import RequestDepartment from './Routes/UserRequestDepartmentRoutes/UserRequestDepartmentRoutes';
 connectDB();
 const app = express();
 app.use(express.json());
@@ -18,6 +19,8 @@ app.use(express.static("public"));
 /////////////////////////////////////
 app.use("/api/product/category" , ProductCategoryRoutes);
 app.use("/api/product" , Product);
+////////////////////////////////////
+app.use("/api/departmentrequest", RequestDepartment);
 ////////////////////////////////////
 
 app.get("/test", async (req: Request, res: Response) => {

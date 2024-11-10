@@ -104,7 +104,7 @@ const loginController = async (req: Request, res: Response) => {
       },
       process.env.JWT_SECRET,
       {
-        expiresIn: "1m",
+        expiresIn: "60m",
       }
     );
 
@@ -121,6 +121,41 @@ const loginController = async (req: Request, res: Response) => {
       message: "Error in login",
       error,
     });
+  }
+};
+
+const objectIdRegex = /^[0-9a-fA-F]{24}$/;
+
+// Check if the provided user ID is valid
+const isValidObjectId = (id: string): boolean => {
+  return objectIdRegex.test(id);
+};
+
+// Controller to update user departments
+const updateUserDepartmentsController = async (req: Request, res: Response) => {
+  try {
+    const { userId } = req.params;
+
+    // Check if the userId is provided and valid
+    if (!userId || !isValidObjectId(userId)) {
+      return res.status(400).json({ success: false, message: "Invalid user ID" });
+    }
+
+    // Find the user by userId
+    const user = await userModel.findById(userId);
+    if (user) {
+      // Update the user's organization
+      user.Organization = "Department"; 
+      await user.save(); // Save the changes
+      console.log(`User with ID ${userId} updated successfully.`);
+      return res.status(200).json({ success: true, message: "User's organization updated to 'Department' successfully" });
+    } else {
+      console.log(`User with ID ${userId} not found.`);
+      return res.status(404).json({ success: false, message: "User not found" });
+    }
+  } catch (error) {
+    console.error("Error updating user's organization:", error);
+    return res.status(500).json({ success: false, message: "Error updating organization", error });
   }
 };
 
@@ -152,7 +187,7 @@ const regenerateToken = async (req: Request, res: Response) => {
     const durationInMilliseconds = currentTime - updatedAt;
 
     // Set duration threshold (1 minute)
-    const durationThreshold = 1 * 60 * 1000; // 1 minute in milliseconds
+    const durationThreshold = 60 * 60 * 1000; // 1 minute in milliseconds
 
     if (durationInMilliseconds > durationThreshold) {
       // Issue a new token
@@ -172,7 +207,7 @@ const regenerateToken = async (req: Request, res: Response) => {
         },
         JWT_SECRET,
         {
-          expiresIn: "1m",
+          expiresIn: "60m",
         }
       );
 
@@ -258,7 +293,7 @@ const getUsersByDepartment = async (req: Request, res: Response) => {
     res.status(500).json({
       success: false,
       message: "Failed to retrieve users",
-      error: error, 
+      error: error,
     });
   }
 };
@@ -450,7 +485,8 @@ module.exports = {
   forgotPasswordController,
   getSingleuser,
   regenerateToken,
-  getUsersByDepartment
+  getUsersByDepartment,
+  updateUserDepartmentsController
 };
 // module.exports = {
 //   registerController

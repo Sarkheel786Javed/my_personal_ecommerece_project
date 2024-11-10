@@ -122,33 +122,59 @@ export const getProducts = async (req: Request, res: Response) => {
     const onSale = (req.query.onSale as string) || "0";
     const productName = (req.query.productName as string) || "";
     const organizationUserId = req.query.organizationUserId as string;
+    const page = parseInt(req.query.page as string);
+    const pageSize = parseInt(req.query.pageSize as string);
     const query: any = {};
 
     if (organizationUserId && isValidObjectId(organizationUserId)) {
       query.organizationUserId = organizationUserId;
-    }
-
-    if (productName.trim() !== "") {
-      query.productName = { $regex: new RegExp(productName, "i") };
-    }
-
-    const parsedRating = parseFloat(rating);
-    if (!isNaN(parsedRating) && parsedRating > 0) {
-      query.rating = { $gte: parsedRating };
-    }
-
-    if (onSale === "true" && featured === "true") {
-      query.$and = [{ onSale: true }, { featured: true }];
-    } else {
-      if (onSale === "true") {
-        query.onSale = true;
+      if (productName.trim() !== "") {
+        query.productName = { $regex: new RegExp(productName, "i") };
       }
-      else if (featured === "true") {
-        query.featured = true;
+  
+      const parsedRating = parseFloat(rating);
+      if (!isNaN(parsedRating) && parsedRating > 0) {
+        query.rating = { $gte: parsedRating };
+      }
+  
+      if (onSale === "true" && featured === "true") {
+        query.$and = [{ onSale: true }, { featured: true }];
+      } else {
+        if (onSale === "true") {
+          query.onSale = true;
+        }
+        else if (featured === "true") {
+          query.featured = true;
+        }
+      }
+    }else{
+      if (productName.trim() !== "") {
+        query.productName = { $regex: new RegExp(productName, "i") };
+      }
+  
+      const parsedRating = parseFloat(rating);
+      if (!isNaN(parsedRating) && parsedRating > 0) {
+        query.rating = { $gte: parsedRating };
+      }
+  
+      if (onSale === "true" && featured === "true") {
+        query.$and = [{ onSale: true }, { featured: true }];
+      } else {
+        if (onSale === "true") {
+          query.onSale = true;
+        }
+        else if (featured === "true") {
+          query.featured = true;
+        }
       }
     }
 
-    const products = await Product.find(query).sort({ createdAt: -1 });
+   
+    const skip = (page - 1) * pageSize;
+    const products = await Product.find(query)
+    .sort({ createdAt: -1 })
+    .skip(skip)
+    .limit(pageSize);
 
     if (products.length === 0) {
       return res.status(404).json({

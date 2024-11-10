@@ -1,29 +1,48 @@
 import express, { Request, Response } from "express";
 const categoryModel = require("../../model/ProductModel/ProductCategoryModel")
 import userModel from "../../model/user";
+const JWT = require("jsonwebtoken");
 
 const objectIdRegex = /^[0-9a-fA-F]{24}$/;
 
 const isValidObjectId = (id: string): boolean => {
   return objectIdRegex.test(id);
 };
-
+interface User  {
+  _id: string;
+  userName: string;
+  phoneNumbber: string;
+  addressLine1: string;
+  city: string;
+  country: string;
+  email: string;
+  Organization: string;
+}
 export const createCategoryController = async (req: Request, res: Response) => {
   try {
-    const { categoryId, categoryName, userId } = req.body;
+    const { categoryId, categoryName } = req.body;
 
     // Validate input
-    if (!categoryName || !userId) {
-      return res.status(400).send({ message: "Category name and User ID are required" });
+    if (!categoryName) {
+      return res.status(400).send({ message: "Category name is required" });
     }
 
-    // Find user by userId
-    const user = await userModel.findById(userId);
+    // Decode token to get user information
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).send({ message: "Authorization token is missing or invalid" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decodedToken = JWT.verify(token, process.env.JWT_SECRET) as User;
+
+    // Find user by ID from decoded token
+    const user = await userModel.findById(decodedToken._id);
     if (!user) {
       return res.status(404).send({ message: "User not found" });
     }
 
-    if (categoryId > "0") {
+    if (categoryId && isValidObjectId(categoryId)) {
       // If categoryId is provided, update the existing category
       const category = await categoryModel.findById(categoryId);
 
@@ -34,7 +53,7 @@ export const createCategoryController = async (req: Request, res: Response) => {
       // Check if the category name is already used by the user or organization
       const existingCategory = await categoryModel.findOne({
         categoryName,
-        userId,
+        userId: user._id,
         _id: { $ne: categoryId }, // Exclude current category from the check
       });
       if (existingCategory) {
@@ -55,9 +74,9 @@ export const createCategoryController = async (req: Request, res: Response) => {
       });
 
     } else {
-      // If no categoryId, create a new category
+      // If no valid categoryId, create a new category
       // Check if the category already exists for the user or organization
-      const existingCategory = await categoryModel.findOne({ categoryName, userId });
+      const existingCategory = await categoryModel.findOne({ categoryName, userId: user._id });
       if (existingCategory) {
         return res.status(409).send({
           success: false,
@@ -68,7 +87,7 @@ export const createCategoryController = async (req: Request, res: Response) => {
       // Create new category
       const category = await new categoryModel({
         categoryName,
-        userId,
+        userId: user._id, // Associate the category with the user's ID
         organization: user.Organization, // Associate the category with the user's organization
       }).save();
 

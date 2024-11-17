@@ -17,8 +17,8 @@ app.use(express.static('public')); // Serve static files from 'public' folder
 app.use("/api/user", myUserRoute);
 app.use(express.static("public"));
 /////////////////////////////////////
-app.use("/api/product/category" , ProductCategoryRoutes);
-app.use("/api/product" , Product);
+app.use("/api/product/category", ProductCategoryRoutes);
+app.use("/api/product", Product);
 ////////////////////////////////////
 app.use("/api/departmentrequest", RequestDepartment);
 ////////////////////////////////////
@@ -27,6 +27,7 @@ app.get("/test", async (req: Request, res: Response) => {
   res.json({ message: "Hello!" });
 });
 
-app.listen(7000, () => {
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
   console.log("Server Started on localhost:7000");
 });
